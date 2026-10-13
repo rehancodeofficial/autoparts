@@ -1,0 +1,246 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Tajawal:wght@400;500;700&display=swap');
+
+:root {
+  /* Colors - Shop Style Reference */
+  --color-canvas-mist: #f2f4f5;
+  --color-pure-white: #ffffff;
+  --color-ink-black: #000000;
+  --color-faint-border: #ebebeb;
+  --color-muted-gray: #787574;
+  --color-cool-stone: #cccccc;
+  --color-warm-fog: #acb0aa;
+  --color-shop-violet: #5433eb;
+  --color-violet-wash: #c0b5f3;
+  --color-slate-ink: #332f2d;
+  --color-ash-veil: #665a54;
+
+  /* Typography */
+  --font-gt-standard: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-shopify-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-ar: 'Tajawal', system-ui, -apple-system, sans-serif;
+
+  /* Spacing */
+  --spacing-4: 4px;
+  --spacing-6: 6px;
+  --spacing-8: 8px;
+  --spacing-10: 10px;
+  --spacing-11: 11px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+  --spacing-38: 38px;
+  --spacing-40: 40px;
+  --spacing-48: 48px;
+  --spacing-64: 64px;
+
+  /* Border Radii */
+  --radius-cards: 28px;
+  --radius-chips: 9999px;
+  --radius-pills: 20px;
+  --radius-inputs: 9999px;
+  --radius-search: 9999px;
+  --radius-buttons: 9999px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: rgba(0, 0, 0, 0.06) 0px 2px 8px 0px;
+  --shadow-sm-2: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.1) 0px 2px 4px -2px;
+  --shadow-lg: rgba(0, 0, 0, 0.12) 0px 4px 24px 0px;
+  --shadow-lg-2: rgba(69, 36, 219, 0.34) 0px 4px 24px 0px;
+
+  /* Surfaces */
+  --surface-canvas: #f2f4f5;
+  --surface-surface: #ffffff;
+  --surface-elevated-card: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-canvas-mist);
+  color: var(--color-ink-black);
+  font-family: var(--font-gt-standard);
+  min-height: 100vh;
+  overflow-x: hidden;
+  letter-spacing: -0.031em;
+  font-size: 16px;
+  line-height: 1.33;
+  -webkit-font-smoothing: antialiased;
+}
+
+body[dir="rtl"] {
+  font-family: var(--font-ar);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-canvas-mist);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-cool-stone);
+  border-radius: 9999px;
+}
+
+/* Pillow-Soft Shop Cards (28px radius, dual-layer soft shadow) */
+.shop-card {
+  background: var(--color-pure-white);
+  border-radius: var(--radius-cards);
+  box-shadow: var(--shadow-sm-2);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  border: none;
+}
+
+.shop-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Category & Action Pills (9999px radius) */
+.shop-pill {
+  background: var(--color-pure-white);
+  border-radius: var(--radius-chips);
+  border: 1px solid var(--color-faint-border);
+  box-shadow: var(--shadow-sm);
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-ink-black);
+  letter-spacing: -0.014em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.shop-pill:hover {
+  background: #fafafa;
+  border-color: #d8d8d8;
+  transform: translateY(-1px);
+}
+
+.shop-pill.active {
+  background: var(--color-ink-black);
+  color: var(--color-pure-white);
+  border-color: var(--color-ink-black);
+}
+
+/* Shop Violet Submit Button */
+.btn-violet-submit {
+  width: 48px;
+  height: 48px;
+  border-radius: 9999px;
+  background: var(--color-shop-violet);
+  box-shadow: var(--shadow-lg-2);
+  border: none;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-violet-submit:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 28px rgba(69, 36, 219, 0.45);
+}
+
+/* Secondary Pill Buttons */
+.btn-shop-pill {
+  border-radius: var(--radius-buttons);
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.014em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  border: 1px solid var(--color-faint-border);
+  background: var(--color-pure-white);
+  color: var(--color-ink-black);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-shop-pill:hover {
+  background: #fafafa;
+  transform: translateY(-1px);
+}
+
+.btn-shop-primary {
+  background: var(--color-ink-black);
+  color: #ffffff;
+  border-radius: var(--radius-buttons);
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-shop-primary:hover {
+  background: #1f1f1f;
+  transform: translateY(-1px);
+}
+
+/* Inputs */
+.shop-input {
+  background: var(--color-pure-white);
+  border-radius: var(--radius-inputs);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 12px 20px;
+  font-size: 14px;
+  color: var(--color-ink-black);
+  letter-spacing: -0.014em;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.shop-input:focus {
+  border-color: var(--color-shop-violet);
+}
+
+/* Fitment Badge Pills */
+.pill-fit {
+  background: #e6f9ed;
+  color: #0d8239;
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pill-unfit {
+  background: #fdf2f2;
+  color: #dc2626;
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
