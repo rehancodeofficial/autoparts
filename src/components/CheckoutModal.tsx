@@ -28,40 +28,48 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mada');
   const [isProcessing, setIsProcessing] = useState(false);
   const [placedOrder, setPlacedOrder] = useState<Order | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const subtotal = cart.reduce((acc, item) => acc + item.part.price * item.quantity, 0);
   const vat = subtotal * 0.15;
   const shipping = subtotal > 500 ? 0 : 25;
   const total = subtotal + vat + shipping;
 
-  const handlePay = () => {
+  const handlePay = async () => {
     setIsProcessing(true);
-    setTimeout(() => {
-      const newOrder: Order = {
-        id: `ord-${Math.floor(1000 + Math.random() * 9000)}`,
-        orderNumber: `KSA-${Math.floor(10000 + Math.random() * 90000)}`,
-        date: new Date().toISOString().replace('T', ' ').substring(0, 16),
-        customerName: name,
-        customerPhone: phone,
-        city,
-        address,
-        items: [...cart],
-        subtotal,
-        vat,
-        shipping,
-        total,
-        paymentMethod,
-        paymentStatus: 'Paid',
-        deliveryStatus: 'Processing',
-        trackingNumber: `SMSA-${Math.floor(100000000 + Math.random() * 900000000)}`,
-        carrier: 'SMSA Express KSA',
-        zatcaQrString: 'AQZTYXVkaSBBdXRvUGFydHMDFDEwMTIzNDU2NzgwMDAwMwMT'
-      };
+    setServerError(null);
 
-      setPlacedOrder(newOrder);
+    try {
+      const res = await fetch('/api/orders/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          customerName: name,
+          customerPhone: phone,
+          city,
+          address,
+          paymentMethod,
+          items: cart.map(it => ({
+            productId: it.part.id,
+            nameEn: it.part.nameEn,
+            nameAr: it.part.nameAr,
+            price: it.part.price,
+            quantity: it.quantity
+          }))
+        })
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Server rejected checkout validation.');
+      }
+
+      const { order } = await res.json();
+      setPlacedOrder(order);
       setIsProcessing(false);
       setStep('success');
-      onOrderPlaced(newOrder);
+      onOrderPlaced(order);
 
       try {
         confetti({
@@ -70,7 +78,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           origin: { y: 0.6 }
         });
       } catch (e) {}
-    }, 1200);
+    } catch (err: any) {
+      setIsProcessing(false);
+      setServerError(err.message || 'Payment processing failed');
+    }
   };
 
   return (
@@ -314,6 +325,20 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 Method: <b>{paymentMethod.toUpperCase()}</b> • Amount: <b>{total.toFixed(2)} SAR</b>
               </div>
             </div>
+
+            {serverError && (
+              <div style={{
+                backgroundColor: '#fff1f0',
+                border: '1px solid #ffccc7',
+                padding: '12px 16px',
+                borderRadius: '16px',
+                color: '#cf1322',
+                fontSize: '13px',
+                marginBottom: '20px'
+              }}>
+                {serverError}
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: '12px' }}>
               <button

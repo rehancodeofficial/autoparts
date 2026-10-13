@@ -1,13 +1,24 @@
 import React, { useState } from 'react';
-import { Part, Order, PartRequest } from '../types';
-import { ShoppingBag, Package, FileSpreadsheet, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Part, Order, PartRequest, VehicleMake, PartCategory, PartBrand, QualityGradeConfig } from '../types';
+import { 
+  ShoppingBag, Package, FileSpreadsheet, CheckCircle2, 
+  ArrowRight, Plus, Car, Layers, Eye, EyeOff, Edit2, Shield 
+} from 'lucide-react';
+import { VehicleManufacturerManager } from './VehicleManufacturerManager';
+import { CategoryAndBrandManager } from './CategoryAndBrandManager';
+import { ProductFormModal } from './ProductFormModal';
 
 interface AdminDashboardProps {
   parts: Part[];
   orders: Order[];
   partRequests: PartRequest[];
+  makes: VehicleMake[];
+  categories: PartCategory[];
+  brands: PartBrand[];
+  qualityGrades: QualityGradeConfig[];
   onAddPart: (part: Part) => void;
   onUpdateOrderStatus: (orderId: string, status: Order['deliveryStatus']) => void;
+  onRefreshAllData: () => void;
   lang: 'en' | 'ar';
 }
 
@@ -15,16 +26,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   parts,
   orders,
   partRequests,
+  makes,
+  categories,
+  brands,
+  qualityGrades,
   onAddPart,
   onUpdateOrderStatus,
+  onRefreshAllData,
   lang
 }) => {
-  const [activeTab, setActiveTab] = useState<'orders' | 'catalog' | 'import'>('orders');
+  const [activeTab, setActiveTab] = useState<'catalog' | 'makes' | 'taxonomy' | 'orders' | 'import'>('catalog');
   const [csvText, setCsvText] = useState('');
   const [importNotice, setImportNotice] = useState<string | null>(null);
 
+  // Product Form Modal state
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [editingPart, setEditingPart] = useState<Part | null>(null);
+
   const totalRevenue = orders.reduce((acc, o) => acc + (o.paymentStatus === 'Paid' ? o.total : 0), 0);
-  const totalStockUnits = parts.reduce((acc, p) => acc + p.stock, 0);
+  const totalStockUnits = parts.reduce((acc, p) => acc + (p.stock || 0), 0);
+
+  const handleOpenAddProduct = () => {
+    setEditingPart(null);
+    setIsProductModalOpen(true);
+  };
+
+  const handleOpenEditProduct = (part: Part) => {
+    setEditingPart(part);
+    setIsProductModalOpen(true);
+  };
 
   const handleCsvImport = () => {
     try {
@@ -38,6 +68,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         category: 'Filters',
         brand: 'Denso Japan OEM',
         condition: 'Genuine Original',
+        qualityGrade: 'GRADE_A',
         price: 95.0,
         originalPrice: 120.0,
         stock: 45,
@@ -67,57 +98,73 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   return (
     <div style={{ padding: '32px 0' }}>
       
-      {/* KPI Cards in Shop Floating Card Style */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '32px' }}>
-        <div className="shop-card" style={{ padding: '24px' }}>
-          <div style={{ fontSize: '12px', color: '#787574', fontWeight: '500' }}>Reconciled Revenue</div>
-          <div style={{ fontSize: '26px', fontWeight: '700', letterSpacing: '-0.04em', color: '#000000', marginTop: '6px' }}>
-            {totalRevenue.toLocaleString()} <span style={{ fontSize: '13px', fontWeight: '500', color: '#787574' }}>SAR</span>
+      {/* KPI Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '28px' }}>
+        <div className="shop-card" style={{ padding: '20px' }}>
+          <div style={{ fontSize: '11px', color: '#787574', fontWeight: '600' }}>Active Vehicle Makes</div>
+          <div style={{ fontSize: '24px', fontWeight: '700', letterSpacing: '-0.04em', color: '#000000', marginTop: '4px' }}>
+            {makes.filter(m => m.isPublished).length} <span style={{ fontSize: '12px', fontWeight: '500', color: '#787574' }}>published</span>
           </div>
-          <div style={{ fontSize: '11px', color: '#0d8239', fontWeight: '500', marginTop: '6px' }}>Direct from Tap & HyperPay</div>
+          <div style={{ fontSize: '11px', color: '#0d8239', fontWeight: '500', marginTop: '4px' }}>Toyota, Honda, BMW...</div>
         </div>
 
-        <div className="shop-card" style={{ padding: '24px' }}>
-          <div style={{ fontSize: '12px', color: '#787574', fontWeight: '500' }}>Warehouse Inventory</div>
-          <div style={{ fontSize: '26px', fontWeight: '700', letterSpacing: '-0.04em', color: '#000000', marginTop: '6px' }}>
-            {totalStockUnits} <span style={{ fontSize: '13px', fontWeight: '500', color: '#787574' }}>units</span>
+        <div className="shop-card" style={{ padding: '20px' }}>
+          <div style={{ fontSize: '11px', color: '#787574', fontWeight: '600' }}>Catalog Products</div>
+          <div style={{ fontSize: '24px', fontWeight: '700', letterSpacing: '-0.04em', color: '#000000', marginTop: '4px' }}>
+            {parts.length} <span style={{ fontSize: '12px', fontWeight: '500', color: '#787574' }}>SKUs</span>
           </div>
-          <div style={{ fontSize: '11px', color: '#787574', marginTop: '6px' }}>Riyadh & Jeddah Hubs</div>
+          <div style={{ fontSize: '11px', color: '#5433eb', fontWeight: '500', marginTop: '4px' }}>{totalStockUnits} warehouse units</div>
         </div>
 
-        <div className="shop-card" style={{ padding: '24px' }}>
-          <div style={{ fontSize: '12px', color: '#787574', fontWeight: '500' }}>Customer Orders</div>
-          <div style={{ fontSize: '26px', fontWeight: '700', letterSpacing: '-0.04em', color: '#000000', marginTop: '6px' }}>
+        <div className="shop-card" style={{ padding: '20px' }}>
+          <div style={{ fontSize: '11px', color: '#787574', fontWeight: '600' }}>Customer Orders</div>
+          <div style={{ fontSize: '24px', fontWeight: '700', letterSpacing: '-0.04em', color: '#000000', marginTop: '4px' }}>
             {orders.length}
           </div>
-          <div style={{ fontSize: '11px', color: '#787574', marginTop: '6px' }}>Live fulfillment queue</div>
+          <div style={{ fontSize: '11px', color: '#787574', marginTop: '4px' }}>{totalRevenue.toLocaleString()} SAR revenue</div>
         </div>
 
-        <div className="shop-card" style={{ padding: '24px' }}>
-          <div style={{ fontSize: '12px', color: '#787574', fontWeight: '500' }}>Part Leads via VIN</div>
-          <div style={{ fontSize: '26px', fontWeight: '700', letterSpacing: '-0.04em', color: '#5433eb', marginTop: '6px' }}>
+        <div className="shop-card" style={{ padding: '20px' }}>
+          <div style={{ fontSize: '11px', color: '#787574', fontWeight: '600' }}>Part Inquiries / Leads</div>
+          <div style={{ fontSize: '24px', fontWeight: '700', letterSpacing: '-0.04em', color: '#000000', marginTop: '4px' }}>
             {partRequests.length}
           </div>
-          <div style={{ fontSize: '11px', color: '#787574', marginTop: '6px' }}>Direct customer requests</div>
+          <div style={{ fontSize: '11px', color: '#787574', marginTop: '4px' }}>Direct customer requests</div>
         </div>
       </div>
 
       {/* Pill Tab Switchers */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
+        <button
+          onClick={() => setActiveTab('catalog')}
+          className={`shop-pill ${activeTab === 'catalog' ? 'active' : ''}`}
+        >
+          <Package size={14} />
+          <span>Product Catalog ({parts.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('makes')}
+          className={`shop-pill ${activeTab === 'makes' ? 'active' : ''}`}
+        >
+          <Car size={14} />
+          <span>Vehicle Manufacturers ({makes.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('taxonomy')}
+          className={`shop-pill ${activeTab === 'taxonomy' ? 'active' : ''}`}
+        >
+          <Layers size={14} />
+          <span>Categories & Brands</span>
+        </button>
+
         <button
           onClick={() => setActiveTab('orders')}
           className={`shop-pill ${activeTab === 'orders' ? 'active' : ''}`}
         >
           <ShoppingBag size={14} />
           <span>Orders ({orders.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('catalog')}
-          className={`shop-pill ${activeTab === 'catalog' ? 'active' : ''}`}
-        >
-          <Package size={14} />
-          <span>Catalog ({parts.length})</span>
         </button>
 
         <button
@@ -129,7 +176,125 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </button>
       </div>
 
-      {/* Orders Table */}
+      {/* 1. Catalog Tab */}
+      {activeTab === 'catalog' && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>Automotive Products Catalog</h3>
+              <p style={{ fontSize: '12px', color: '#787574', margin: '2px 0 0' }}>
+                Full product lifecycle: pricing, inventory, quality grades, fitment mapping, and publication status.
+              </p>
+            </div>
+            <button onClick={handleOpenAddProduct} className="btn-shop-primary" style={{ padding: '8px 16px', fontSize: '13px' }}>
+              <Plus size={14} />
+              <span>Add Product</span>
+            </button>
+          </div>
+
+          <div className="shop-card" style={{ padding: '20px', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ color: '#787574', borderBottom: '1px solid #ebebeb' }}>
+                  <th style={{ padding: '12px' }}>Product</th>
+                  <th style={{ padding: '12px' }}>OEM / SKU</th>
+                  <th style={{ padding: '12px' }}>Category & Brand</th>
+                  <th style={{ padding: '12px' }}>Quality Tier</th>
+                  <th style={{ padding: '12px' }}>Price</th>
+                  <th style={{ padding: '12px' }}>Stock</th>
+                  <th style={{ padding: '12px' }}>Status</th>
+                  <th style={{ padding: '12px', textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {parts.map((p) => (
+                  <tr key={p.id} style={{ borderBottom: '1px solid #f2f4f5' }}>
+                    <td style={{ padding: '14px 12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <img src={p.images[0] || 'https://via.placeholder.com/44'} alt="" style={{ width: '44px', height: '44px', borderRadius: '10px', objectFit: 'cover' }} />
+                      <div>
+                        <div style={{ fontWeight: '600', color: '#000000' }}>{p.nameEn}</div>
+                        <div style={{ fontSize: '11px', color: '#787574' }}>{p.nameAr}</div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '14px 12px' }}>
+                      <span style={{ backgroundColor: '#f2f4f5', padding: '3px 8px', borderRadius: '6px', fontWeight: '600', fontSize: '11px' }}>
+                        {p.oemNumber || p.sku}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 12px' }}>
+                      <div style={{ fontWeight: '500' }}>{p.category}</div>
+                      <div style={{ fontSize: '11px', color: '#787574' }}>{p.brand}</div>
+                    </td>
+                    <td style={{ padding: '14px 12px' }}>
+                      <span style={{
+                        padding: '3px 8px',
+                        borderRadius: '9999px',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        backgroundColor: p.qualityGrade === 'GRADE_A' ? '#000000' : p.qualityGrade === 'GRADE_B' ? '#5433eb' : '#f2f4f5',
+                        color: (p.qualityGrade === 'GRADE_A' || p.qualityGrade === 'GRADE_B') ? '#ffffff' : '#000000'
+                      }}>
+                        {p.qualityGrade || 'GRADE_A'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 12px', fontWeight: '700', color: '#000000' }}>
+                      {p.price.toFixed(2)} SAR
+                    </td>
+                    <td style={{ padding: '14px 12px' }}>
+                      <span style={{ fontWeight: '600', color: p.stock > 0 ? '#0d8239' : '#d92d20' }}>
+                        {p.stock} units
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 12px' }}>
+                      <span style={{
+                        padding: '3px 8px',
+                        borderRadius: '9999px',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        backgroundColor: (p.status === 'PUBLISHED' || !p.status) ? '#e6f9ed' : '#feeae9',
+                        color: (p.status === 'PUBLISHED' || !p.status) ? '#0d8239' : '#d92d20'
+                      }}>
+                        {p.status || 'PUBLISHED'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 12px', textAlign: 'right' }}>
+                      <button
+                        onClick={() => handleOpenEditProduct(p)}
+                        style={{ padding: '6px 12px', border: '1px solid #ebebeb', borderRadius: '8px', background: '#ffffff', cursor: 'pointer', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <Edit2 size={12} />
+                        <span>Edit</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Vehicle Manufacturers Tab */}
+      {activeTab === 'makes' && (
+        <VehicleManufacturerManager
+          makes={makes}
+          onRefresh={onRefreshAllData}
+          lang={lang}
+        />
+      )}
+
+      {/* 3. Taxonomy & Brands Tab */}
+      {activeTab === 'taxonomy' && (
+        <CategoryAndBrandManager
+          categories={categories}
+          brands={brands}
+          qualityGrades={qualityGrades}
+          onRefresh={onRefreshAllData}
+          lang={lang}
+        />
+      )}
+
+      {/* 4. Orders Tab */}
       {activeTab === 'orders' && (
         <div className="shop-card" style={{ padding: '24px', overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
@@ -198,45 +363,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       )}
 
-      {/* Catalog Table */}
-      {activeTab === 'catalog' && (
-        <div className="shop-card" style={{ padding: '24px', overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ color: '#787574', borderBottom: '1px solid #ebebeb' }}>
-                <th style={{ padding: '12px' }}>Part</th>
-                <th style={{ padding: '12px' }}>OEM Number</th>
-                <th style={{ padding: '12px' }}>Category</th>
-                <th style={{ padding: '12px' }}>Price</th>
-                <th style={{ padding: '12px' }}>Stock</th>
-                <th style={{ padding: '12px' }}>Bin Location</th>
-              </tr>
-            </thead>
-            <tbody>
-              {parts.map((p) => (
-                <tr key={p.id} style={{ borderBottom: '1px solid #f2f4f5' }}>
-                  <td style={{ padding: '16px 12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <img src={p.images[0]} alt="" style={{ width: '44px', height: '44px', borderRadius: '12px', objectFit: 'cover' }} />
-                    <div>
-                      <div style={{ fontWeight: '500', color: '#000000' }}>{p.nameEn}</div>
-                      <div style={{ fontSize: '11px', color: '#787574' }}>SKU: {p.sku}</div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px 12px' }}>
-                    <span style={{ backgroundColor: '#f2f4f5', padding: '4px 8px', borderRadius: '9999px', fontWeight: '600' }}>{p.oemNumber}</span>
-                  </td>
-                  <td style={{ padding: '16px 12px', color: '#787574' }}>{p.category}</td>
-                  <td style={{ padding: '16px 12px', fontWeight: '600', color: '#000000' }}>{p.price.toFixed(2)} SAR</td>
-                  <td style={{ padding: '16px 12px', fontWeight: '500' }}>{p.stock} units</td>
-                  <td style={{ padding: '16px 12px', color: '#787574' }}>{p.warehouseLocation}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* CSV Import */}
+      {/* 5. CSV Import Tab */}
       {activeTab === 'import' && (
         <div className="shop-card" style={{ padding: '32px' }}>
           <h3 style={{ fontSize: '18px', fontWeight: '600', letterSpacing: '-0.03em', color: '#000000', marginBottom: '8px' }}>
@@ -268,6 +395,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </button>
         </div>
       )}
+
+      {/* Product Form Modal */}
+      {isProductModalOpen && (
+        <ProductFormModal
+          initialProduct={editingPart}
+          makes={makes}
+          categories={categories}
+          brands={brands}
+          qualityGrades={qualityGrades}
+          onClose={() => setIsProductModalOpen(false)}
+          onSaveSuccess={() => {
+            setIsProductModalOpen(false);
+            onRefreshAllData();
+          }}
+          lang={lang}
+        />
+      )}
+
     </div>
   );
 };

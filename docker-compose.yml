@@ -1,40 +1,85 @@
 version: '3.8'
 
 services:
+  # 1. PostgreSQL 16 Database
   postgres:
     image: postgres:16-alpine
     container_name: autopart_postgres
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: autopart_user
-      POSTGRES_PASSWORD: autopart_password
-      POSTGRES_DB: autopart_db
+      POSTGRES_USER: ${POSTGRES_USER:-autopart_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-autopart_password}
+      POSTGRES_DB: ${POSTGRES_DB:-autopart_db}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-autopart_user} -d ${POSTGRES_DB:-autopart_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - autopart_network
 
+  # 2. AutoPart Full-Stack Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autopart_app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-autopart_user}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-autopart_user}:${POSTGRES_PASSWORD:-autopart_password}@postgres:5432/${POSTGRES_DB:-autopart_db}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev_super_secret_access_jwt_key_32chars}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev_super_secret_refresh_jwt_key_32chars}
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:4000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - autopart_network
+
+  # 3. Redis Cache & Job Queue
   redis:
     image: redis:7-alpine
     container_name: autopart_redis
-    restart: always
+    restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - autopart_network
 
+  # 4. Local Mailpit (SMTP & Web UI)
   mailpit:
     image: axllent/mailpit:latest
     container_name: autopart_mailpit
-    restart: always
+    restart: unless-stopped
     ports:
       - "8025:8025" # Web UI
       - "1025:1025" # SMTP
+    networks:
+      - autopart_network
 
+  # 5. Local MinIO S3 Object Storage
   minio:
     image: minio/minio:latest
     container_name: autopart_minio
-    restart: always
+    restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
@@ -44,8 +89,14 @@ services:
       - "9001:9001" # Web Console
     volumes:
       - minio_data:/data
+    networks:
+      - autopart_network
 
 volumes:
   postgres_data:
   redis_data:
   minio_data:
+
+networks:
+  autopart_network:
+    driver: bridge
