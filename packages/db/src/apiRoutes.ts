@@ -676,6 +676,15 @@ adminRouter.put('/categories/:id', async (req: AuthenticatedRequest, res: Respon
   }
 });
 
+adminRouter.delete('/categories/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    await catalogService.deleteCategory(req.params.id);
+    res.json({ message: 'Category deleted successfully' });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // --- Admin: Part Brands ---
 adminRouter.get('/brands', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -706,6 +715,25 @@ adminRouter.post('/brands', async (req: AuthenticatedRequest, res: Response) => 
   }
 });
 
+adminRouter.put('/brands/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const updated = await catalogService.updatePartBrand(req.params.id, req.body);
+    if (!updated) return res.status(404).json({ error: 'Part brand not found' });
+    res.json(updated);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+adminRouter.delete('/brands/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    await catalogService.deletePartBrand(req.params.id);
+    res.json({ message: 'Part brand deleted successfully' });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // --- Admin: Quality Grades ---
 adminRouter.get('/quality-grades', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -725,7 +753,7 @@ adminRouter.put('/quality-grades/:code', async (req: AuthenticatedRequest, res: 
   }
 });
 
-// --- Admin: Products (Full Lifecycle: Create, Update, Fitments, Audit) ---
+// --- Admin: Products (Full Lifecycle: Create, Update, Delete, Fitments, Audit) ---
 adminRouter.get('/products', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const resProducts = await query(`
@@ -770,6 +798,15 @@ adminRouter.put('/products/:id', async (req: AuthenticatedRequest, res: Response
   try {
     const result = await catalogService.saveProductWithFitments({ ...req.body, id: req.params.id }, req.user?.id);
     res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+adminRouter.delete('/products/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    await catalogService.deleteProduct(req.params.id, req.user?.id);
+    res.json({ message: 'Product deleted successfully' });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }

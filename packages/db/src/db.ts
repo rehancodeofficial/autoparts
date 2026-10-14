@@ -11,11 +11,19 @@ let pool: Pool | null = null;
 export function getDatabasePool(): Pool {
   if (!pool) {
     const connectionString = process.env.DATABASE_URL || 'postgresql://autopart_user:autopart_password@localhost:5432/autopart_db';
+    
+    // Check if connecting to Supabase or remote cloud PostgreSQL that requires SSL
+    const isRemoteDb = connectionString.includes('supabase.co') || 
+                       connectionString.includes('pooler.supabase.com') ||
+                       connectionString.includes('aws.') ||
+                       process.env.NODE_ENV === 'production';
+
     pool = new Pool({
       connectionString,
-      max: 20,
+      max: process.env.NODE_ENV === 'production' ? 5 : 20,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
+      connectionTimeoutMillis: 10000,
+      ...(isRemoteDb ? { ssl: { rejectUnauthorized: false } } : {}),
     });
 
     pool.on('error', (err) => {

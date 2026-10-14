@@ -32,6 +32,7 @@ export const CategoryAndBrandManager: React.FC<CategoryAndBrandManagerProps> = (
 
   // Brand Modal
   const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
+  const [editingBrand, setEditingBrand] = useState<PartBrand | null>(null);
   const [brandName, setBrandName] = useState('');
   const [brandSlug, setBrandSlug] = useState('');
   const [brandLogoUrl, setBrandLogoUrl] = useState('');
@@ -110,13 +111,35 @@ export const CategoryAndBrandManager: React.FC<CategoryAndBrandManagerProps> = (
   };
 
   // Brand handlers
+  const openCreateBrand = () => {
+    setEditingBrand(null);
+    setBrandName('');
+    setBrandSlug('');
+    setBrandLogoUrl('');
+    setBrandDesc('');
+    setErrorMsg(null);
+    setIsBrandModalOpen(true);
+  };
+
+  const openEditBrand = (b: PartBrand) => {
+    setEditingBrand(b);
+    setBrandName(b.name);
+    setBrandSlug(b.slug);
+    setBrandLogoUrl(b.logoUrl || '');
+    setBrandDesc(b.description || '');
+    setErrorMsg(null);
+    setIsBrandModalOpen(true);
+  };
+
   const handleSaveBrand = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setErrorMsg(null);
     try {
-      const res = await fetch('/api/admin/brands', {
-        method: 'POST',
+      const url = editingBrand ? `/api/admin/brands/${editingBrand.id}` : '/api/admin/brands';
+      const method = editingBrand ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: brandName.trim(),
@@ -138,11 +161,40 @@ export const CategoryAndBrandManager: React.FC<CategoryAndBrandManagerProps> = (
       setBrandSlug('');
       setBrandLogoUrl('');
       setBrandDesc('');
+      setEditingBrand(null);
       onRefresh();
     } catch (e: any) {
       setErrorMsg(e.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteBrand = async (id: string, name: string) => {
+    if (!window.confirm(`Delete brand "${name}"? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/admin/brands/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete brand');
+      }
+      onRefresh();
+    } catch (e: any) {
+      alert(e.message);
+    }
+  };
+
+  const handleDeleteCategory = async (id: string, name: string) => {
+    if (!window.confirm(`Delete category "${name}"? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/admin/categories/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete category');
+      }
+      onRefresh();
+    } catch (e: any) {
+      alert(e.message);
     }
   };
 
@@ -263,9 +315,32 @@ export const CategoryAndBrandManager: React.FC<CategoryAndBrandManagerProps> = (
                       </span>
                     </td>
                     <td style={{ padding: '10px', textAlign: 'right' }}>
-                      <button onClick={() => openEditCategory(c)} style={{ padding: '6px', border: '1px solid #ebebeb', borderRadius: '8px', background: '#ffffff', cursor: 'pointer' }}>
-                        <Edit2 size={13} />
-                      </button>
+                      <div style={{ display: 'inline-flex', gap: '6px' }}>
+                        <button onClick={() => openEditCategory(c)} style={{ padding: '6px', border: '1px solid #ebebeb', borderRadius: '8px', background: '#ffffff', cursor: 'pointer' }} title="Edit Category">
+                          <Edit2 size={13} />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (window.confirm(`Delete category "${c.nameEn}"?`)) {
+                              try {
+                                const res = await fetch(`/api/admin/categories/${c.id}`, { method: 'DELETE' });
+                                if (res.ok) {
+                                  onRefresh();
+                                } else {
+                                  const d = await res.json();
+                                  alert(d.error || 'Failed to delete category');
+                                }
+                              } catch (err: any) {
+                                alert(err.message || 'Error deleting category');
+                              }
+                            }
+                          }}
+                          style={{ padding: '6px 8px', border: '1px solid #feeae9', borderRadius: '8px', background: '#feeae9', color: '#d92d20', cursor: 'pointer', fontSize: '11px' }}
+                          title="Delete Category"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -282,7 +357,7 @@ export const CategoryAndBrandManager: React.FC<CategoryAndBrandManagerProps> = (
             <p style={{ fontSize: '13px', color: '#787574', margin: 0 }}>
               Distinguish vehicle manufacturers from aftermarket & replacement part brands (e.g. Denso, Bosch, Brembo, Advics).
             </p>
-            <button onClick={() => setIsBrandModalOpen(true)} className="btn-shop-primary" style={{ padding: '8px 14px', fontSize: '12px' }}>
+            <button onClick={openCreateBrand} className="btn-shop-primary" style={{ padding: '8px 14px', fontSize: '12px' }}>
               <Plus size={14} />
               <span>Add Part Brand</span>
             </button>
@@ -297,6 +372,7 @@ export const CategoryAndBrandManager: React.FC<CategoryAndBrandManagerProps> = (
                   <th style={{ padding: '10px' }}>Description</th>
                   <th style={{ padding: '10px' }}>Products</th>
                   <th style={{ padding: '10px' }}>Status</th>
+                  <th style={{ padding: '10px' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -313,6 +389,22 @@ export const CategoryAndBrandManager: React.FC<CategoryAndBrandManagerProps> = (
                     <td style={{ padding: '12px 10px', fontWeight: '600' }}>{b.productCount || 0}</td>
                     <td style={{ padding: '12px 10px' }}>
                       <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '11px', fontWeight: '600', backgroundColor: '#e6f9ed', color: '#0d8239' }}>Active</span>
+                    </td>
+                    <td style={{ padding: '12px 10px' }}>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => openEditBrand(b)}
+                          style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #d1d5db', backgroundColor: '#fff', cursor: 'pointer', fontSize: '12px', color: '#374151' }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteBrand(b.id, b.name)}
+                          style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #fca5a5', backgroundColor: '#fff5f5', cursor: 'pointer', fontSize: '12px', color: '#dc2626' }}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -407,7 +499,7 @@ export const CategoryAndBrandManager: React.FC<CategoryAndBrandManagerProps> = (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
           <div className="shop-card" style={{ width: '100%', maxWidth: '440px', padding: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: '700', margin: 0 }}>Add Part Brand</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: '700', margin: 0 }}>{editingBrand ? 'Edit Part Brand' : 'Add Part Brand'}</h3>
               <button onClick={() => setIsBrandModalOpen(false)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
                 <X size={18} />
               </button>

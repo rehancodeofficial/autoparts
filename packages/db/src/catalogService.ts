@@ -798,6 +798,69 @@ export async function createPartBrand(data: {
   return res.rows[0];
 }
 
+export async function updatePartBrand(id: string, data: Partial<PartBrand>) {
+  const fields: string[] = ['"updatedAt" = NOW()'];
+  const values: any[] = [id];
+  let idx = 2;
+
+  if (data.name !== undefined) { fields.push(`"name" = $${idx++}`); values.push(data.name.trim()); }
+  if (data.slug !== undefined) { fields.push(`"slug" = $${idx++}`); values.push(data.slug.trim().toLowerCase()); }
+  if (data.logoUrl !== undefined) { fields.push(`"logoUrl" = $${idx++}`); values.push(data.logoUrl); }
+  if (data.description !== undefined) { fields.push(`"description" = $${idx++}`); values.push(data.description); }
+  if (data.isPublished !== undefined) { fields.push(`"isPublished" = $${idx++}`); values.push(data.isPublished); }
+  if (data.isEnabled !== undefined) { fields.push(`"isEnabled" = $${idx++}`); values.push(data.isEnabled); }
+
+  const res = await query(`UPDATE "PartBrand" SET ${fields.join(', ')} WHERE id = $1 RETURNING *`, values);
+  return res.rows[0] || null;
+}
+
+export async function deletePartBrand(id: string) {
+  const prodCount = await query(`SELECT COUNT(*)::int as count FROM "Product" WHERE "brandId" = $1`, [id]);
+  if (prodCount.rows[0]?.count > 0) {
+    throw new Error(`Cannot delete brand: it has ${prodCount.rows[0].count} products associated. Please reassign or delete the products first.`);
+  }
+  await query(`DELETE FROM "PartBrand" WHERE id = $1`, [id]);
+  return { success: true };
+}
+
+export async function deleteCategory(id: string) {
+  const prodCount = await query(`SELECT COUNT(*)::int as count FROM "Product" WHERE "categoryId" = $1 OR "subcategoryId" = $1`, [id]);
+  if (prodCount.rows[0]?.count > 0) {
+    throw new Error(`Cannot delete category: it has ${prodCount.rows[0].count} products associated. Please reassign or delete products first.`);
+  }
+  const childCount = await query(`SELECT COUNT(*)::int as count FROM "Category" WHERE "parentId" = $1`, [id]);
+  if (childCount.rows[0]?.count > 0) {
+    throw new Error(`Cannot delete category: it has ${childCount.rows[0].count} subcategories. Please delete or reassign subcategories first.`);
+  }
+  await query(`DELETE FROM "Category" WHERE id = $1`, [id]);
+  return { success: true };
+}
+
+export async function deleteProduct(id: string, actingAdminId?: string) {
+  const existing = await query(`SELECT * FROM "Product" WHERE id = $1`, [id]);
+  if (!existing.rows.length) {
+    throw new Error('Product not found');
+  }
+
+  if (actingAdminId) {
+    await query(`
+      INSERT INTO "AuditLog" ("id", "userId", "action", "entity", "entityId", "oldValues", "createdAt")
+      VALUES ($1, $2, $3, $4, $5, $6, NOW())
+    `, [
+      `audit-${crypto.randomUUID()}`,
+      actingAdminId,
+      'DELETE_PRODUCT',
+      'Product',
+      id,
+      JSON.stringify({ sku: existing.rows[0].sku, nameEn: existing.rows[0].nameEn, price: existing.rows[0].sellingPrice })
+    ]);
+  }
+
+  // Cascades clean up ProductImage, ProductFitment, PartNumber
+  await query(`DELETE FROM "Product" WHERE id = $1`, [id]);
+  return { success: true };
+}
+
 export async function updateQualityGradeConfig(code: string, data: Partial<QualityGradeConfig>) {
   const res = await query(
     `INSERT INTO "QualityGradeConfig" ("code", "nameEn", "nameAr", "displayLabel", "descriptionEn", "sortOrder", "updatedAt")

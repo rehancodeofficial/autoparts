@@ -258,13 +258,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </span>
                     </td>
                     <td style={{ padding: '14px 12px', textAlign: 'right' }}>
-                      <button
-                        onClick={() => handleOpenEditProduct(p)}
-                        style={{ padding: '6px 12px', border: '1px solid #ebebeb', borderRadius: '8px', background: '#ffffff', cursor: 'pointer', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                      >
-                        <Edit2 size={12} />
-                        <span>Edit</span>
-                      </button>
+                      <div style={{ display: 'inline-flex', gap: '6px' }}>
+                        <button
+                          onClick={() => handleOpenEditProduct(p)}
+                          style={{ padding: '6px 12px', border: '1px solid #ebebeb', borderRadius: '8px', background: '#ffffff', cursor: 'pointer', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          <Edit2 size={12} />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (window.confirm(`Are you sure you want to delete "${p.nameEn}"?`)) {
+                              try {
+                                const res = await fetch(`/api/admin/products/${p.id}`, { method: 'DELETE' });
+                                if (res.ok) {
+                                  onRefreshAllData();
+                                } else {
+                                  const d = await res.json();
+                                  alert(d.error || 'Failed to delete product');
+                                }
+                              } catch (err: any) {
+                                alert(err.message || 'Error deleting product');
+                              }
+                            }
+                          }}
+                          style={{ padding: '6px 10px', border: '1px solid #feeae9', borderRadius: '8px', background: '#feeae9', color: '#d92d20', cursor: 'pointer', fontSize: '12px' }}
+                          title="Delete Product"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
