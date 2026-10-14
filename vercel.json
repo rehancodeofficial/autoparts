@@ -2,6 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "pnpm run build",
   "outputDirectory": "dist",
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "packages/db/prisma/migrations/**"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",

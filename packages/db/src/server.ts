@@ -7,8 +7,14 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Safe __dirname polyfill — same rationale as db.ts:
+// Vercel's esbuild compiles to CJS, where import.meta.url is undefined.
+let _serverDir: string;
+try {
+  _serverDir = path.dirname(fileURLToPath(import.meta.url));
+} catch {
+  _serverDir = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
+}
 
 export function createApp() {
   const app = express();
@@ -32,8 +38,8 @@ export function createApp() {
   // Authentication & Store APIs
   app.use('/api', apiRouter);
 
-  // Serve compiled frontend production bundle if exists
-  const distPath = path.join(__dirname, '../../../dist');
+  // Serve compiled frontend production bundle if exists (local/Docker mode only)
+  const distPath = path.join(_serverDir, '../../../dist');
   if (fs.existsSync(distPath)) {
     app.use(express.static(distPath));
     app.use((req, res, next) => {
@@ -70,7 +76,7 @@ export async function startServer(port: number = 4000) {
 const isDirectRun = process.argv[1] && (
   process.argv[1].endsWith('server.ts') ||
   process.argv[1].endsWith('server.js') ||
-  process.argv[1] === __filename
+  process.argv[1] === _serverDir + '/server.js'
 );
 
 const app = createApp();
