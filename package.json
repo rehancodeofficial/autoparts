@@ -19,22 +19,32 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^26.6.5",
     "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@types/supertest": "^7.2.1",
+    "@vitejs/plugin-react": "^6.1.2",
+    "oxlint": "^1.88.0",
     "supertest": "^7.3.1",
     "tsx": "^4.23.15",
     "turbo": "^2.0.0",
     "typescript": "^5.4.5",
+    "vite": "^8.3.4",
     "vitest": "^5.0.4"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "canvas-confetti": "^1.9.4",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^18.0.7",
     "express": "^5.3.0",
     "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^1.57.0",
     "pg": "^8.23.1",
-    "pg-mem": "^3.0.14"
+    "pg-mem": "^3.0.14",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   }
 }
