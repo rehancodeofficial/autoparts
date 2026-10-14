@@ -73,7 +73,11 @@ const isDirectRun = process.argv[1] && (
   process.argv[1] === __filename
 );
 
+const app = createApp();
+
 if (isDirectRun || typeof require !== 'undefined' && require.main === module) {
   const port = parseInt(process.env.PORT || '4000', 10);
   startServer(port);
 }
+
+export default app;
