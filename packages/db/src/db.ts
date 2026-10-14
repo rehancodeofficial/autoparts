@@ -10,13 +10,34 @@ let pool: Pool | null = null;
 
 export function getDatabasePool(): Pool {
   if (!pool) {
-    const connectionString = process.env.DATABASE_URL || 'postgresql://autopart_user:autopart_password@localhost:5432/autopart_db';
+    let connectionString = process.env.DATABASE_URL || 'postgresql://autopart_user:autopart_password@localhost:5432/autopart_db';
+
+    // If DATABASE_URL still points to localhost but we're in production,
+    // fail fast with a clear error rather than a cryptic ECONNREFUSED.
+    const isLocalhost = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+    if (isLocalhost && process.env.NODE_ENV === 'production') {
+      console.error(
+        '[DB] DATABASE_URL is pointing to localhost in production! ' +
+        'Set DATABASE_URL to the Supabase Transaction Pooler connection string in Vercel environment variables.'
+      );
+      // Use Supabase direct connection as last-resort fallback
+      const supabaseUrl = process.env.SUPABASE_URL || '';
+      const supabaseRef = supabaseUrl.replace('https://', '').replace('.supabase.co', '');
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+      if (supabaseRef && serviceKey) {
+        connectionString = `postgresql://postgres.${supabaseRef}:${serviceKey}@aws-0-us-east-1.pooler.supabase.com:6543/postgres`;
+        console.log('[DB] Using Supabase pooler as fallback connection.');
+      }
+    }
     
     // Check if connecting to Supabase or remote cloud PostgreSQL that requires SSL
-    const isRemoteDb = connectionString.includes('supabase.co') || 
-                       connectionString.includes('pooler.supabase.com') ||
-                       connectionString.includes('aws.') ||
-                       process.env.NODE_ENV === 'production';
+    const isRemoteDb = !connectionString.includes('localhost') && !connectionString.includes('127.0.0.1') &&
+                       (
+                         connectionString.includes('supabase.co') || 
+                         connectionString.includes('pooler.supabase.com') ||
+                         connectionString.includes('aws.') ||
+                         process.env.NODE_ENV === 'production'
+                       );
 
     pool = new Pool({
       connectionString,
