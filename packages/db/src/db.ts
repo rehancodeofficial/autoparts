@@ -44,9 +44,10 @@ export function getDatabasePool(): Pool {
       const supabaseUrl = process.env.SUPABASE_URL || '';
       const supabaseRef = supabaseUrl.replace('https://', '').replace('.supabase.co', '');
       const dbPassword = process.env.SUPABASE_DB_PASSWORD || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+      const poolerRegion = process.env.SUPABASE_POOLER_REGION || 'ap-northeast-1';
       if (supabaseRef && dbPassword) {
-        connectionString = `postgresql://postgres.${supabaseRef}:${encodeURIComponent(dbPassword)}@aws-0-me-central-1.pooler.supabase.com:6543/postgres`;
-        console.log('[DB] Using Supabase pooler fallback connection.');
+        connectionString = `postgresql://postgres.${supabaseRef}:${encodeURIComponent(dbPassword)}@aws-0-${poolerRegion}.pooler.supabase.com:6543/postgres`;
+        console.log(`[DB] Using Supabase pooler fallback connection (region: aws-0-${poolerRegion}).`);
       }
     }
     
