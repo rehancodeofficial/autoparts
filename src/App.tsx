@@ -115,44 +115,7 @@ export function App() {
           1. HEADER COMPONENT (Exact Match to Screenshot)
           ========================================================================= */}
 
-      {/* Top Black Micro-utility Bar (matches autostore.sa top right links) */}
-      <div style={{
-        height: '28px',
-        backgroundColor: '#0D0D0D',
-        borderBottom: '1px solid #1A1A1A',
-        color: '#888888',
-        fontSize: '11px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        padding: '0 32px',
-        gap: '20px',
-        fontFamily: 'var(--font-ui)'
-      }}>
-        <button onClick={() => { }} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', fontSize: '11px' }}>
-          Blog
-        </button>
-        <span style={{ color: '#333' }}>•</span>
-        <button onClick={() => { }} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', fontSize: '11px' }}>
-          About Us
-        </button>
-        <span style={{ color: '#333' }}>•</span>
-        <button onClick={() => { }} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', fontSize: '11px' }}>
-          Contact Us
-        </button>
-        <span style={{ color: '#333' }}>•</span>
-        <button onClick={() => { if (!user) setView('login'); else setView('account'); }} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', fontSize: '11px' }}>
-          {user ? user.name : 'My Account'}
-        </button>
-        <span style={{ color: '#333' }}>•</span>
-        <button onClick={() => setView(view === 'store' ? 'admin' : 'store')} style={{ background: 'none', border: 'none', color: '#888888', cursor: 'pointer', fontSize: '11px' }}>
-          {view === 'store' ? 'Admin' : 'Store'}
-        </button>
-        <span style={{ color: '#333' }}>•</span>
-        <button onClick={() => setLang(lang === 'en' ? 'ar' : 'en')} style={{ background: 'none', border: 'none', color: '#ffffff', fontWeight: 600, cursor: 'pointer', fontSize: '11px' }}>
-          {lang === 'en' ? 'العربية' : 'English'}
-        </button>
-      </div>
+      {/* Top micro bar removed per user request */}
 
       {/* Main Header Bar (#1A1A1A Dark Surface) */}
       <div style={{
@@ -409,6 +372,7 @@ export function App() {
         >
           {[
             { label: 'HOME', action: () => { setView('store'); setActiveDropdown(null); setIsVehicleMenuOpen(false); } },
+            { label: 'ABOUT US', action: () => { const el = document.getElementById('part-finder-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setActiveDropdown(null); setIsVehicleMenuOpen(false); } },
             { label: 'SHOP BY VEHICLE', isVehicleDropdown: true, action: () => { setIsVehicleMenuOpen(prev => !prev); setActiveDropdown(null); } },
             {
               label: 'CAR CARE',
@@ -527,6 +491,7 @@ export function App() {
               ]
             },
             { label: 'DEALS', isRed: true, action: () => { const el = document.getElementById('featured-deals-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setActiveDropdown(null); setIsVehicleMenuOpen(false); } },
+            { label: 'CONTACT US', action: () => { const el = document.getElementById('part-finder-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setActiveDropdown(null); setIsVehicleMenuOpen(false); } },
           ].map((item) => {
             const isVehicleActive = item.isVehicleDropdown && isVehicleMenuOpen;
             const isNavDropdownActive = activeDropdown === item.label;
@@ -1007,125 +972,188 @@ export function App() {
           />
 
           {/* =========================================================================
-              3. QUICK-LINK CARDS (Overlapping Hero: Brake Discs, Suspension, etc.)
-              Exact Match to User Screenshot 1 with Real Vector Graphics
+              3. CATEGORY SHOWCASE CARDS (Full-Width with Left/Right Arrows)
               ========================================================================= */}
-          <section style={{ maxWidth: '1240px', margin: '-32px auto 36px auto', padding: '0 20px', position: 'relative', zIndex: 10 }}>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(184px, 1fr))',
-              gap: '10px',
-              alignItems: 'stretch'
-            }}>
+          <section style={{ width: '100%', margin: '-44px 0 36px 0', padding: '0 16px', position: 'relative', zIndex: 10, boxSizing: 'border-box' }}>
+            {/* Left Scroll Arrow */}
+            <button
+              onClick={() => {
+                const el = document.getElementById('category-cards-track');
+                if (el) el.scrollBy({ left: -320, behavior: 'smooth' });
+              }}
+              style={{
+                position: 'absolute',
+                left: '20px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                backgroundColor: '#E53935',
+                color: '#ffffff',
+                border: 'none',
+                boxShadow: '0 4px 12px rgba(229, 57, 53, 0.4)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 20,
+                transition: 'transform 0.15s, background-color 0.15s'
+              }}
+              aria-label="Scroll left"
+            >
+              <ChevronLeft size={22} color="#ffffff" />
+            </button>
+
+            {/* Right Scroll Arrow */}
+            <button
+              onClick={() => {
+                const el = document.getElementById('category-cards-track');
+                if (el) el.scrollBy({ left: 320, behavior: 'smooth' });
+              }}
+              style={{
+                position: 'absolute',
+                right: '20px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                backgroundColor: '#E53935',
+                color: '#ffffff',
+                border: 'none',
+                boxShadow: '0 4px 12px rgba(229, 57, 53, 0.4)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 20,
+                transition: 'transform 0.15s, background-color 0.15s'
+              }}
+              aria-label="Scroll right"
+            >
+              <ChevronRight size={22} color="#ffffff" />
+            </button>
+
+            <div
+              id="category-cards-track"
+              className="no-scrollbar"
+              style={{
+                display: 'flex',
+                gap: '12px',
+                overflowX: 'auto',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                padding: '4px 36px 8px 36px',
+                scrollBehavior: 'smooth'
+              }}
+            >
               {[
                 {
-                  title: 'BRAKE DISCS & PADS',
-                  desc: 'Brembo & Advics OEM',
-                  price: 'FROM 220 SAR',
-                  icon: '/categories/quick/brakes.svg'
+                  title: 'BYD SHARK 6',
+                  desc: 'Bull bars, side steps, protection plates',
+                  img: '/categories/byd_shark.jpg',
+                  action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
                 },
                 {
-                  title: 'SUSPENSION COILOVERS',
-                  desc: 'Bilstein & Fox Off-Road',
-                  price: 'FROM 1,450 SAR',
-                  icon: '/categories/quick/suspension.svg'
+                  title: 'DETAILING EQUIPMENT',
+                  desc: 'Professional tools & machines',
+                  img: '/categories/detailing.jpg',
+                  action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
                 },
                 {
-                  title: 'IGNITION PLUGS & COILS',
-                  desc: 'NGK Laser Iridium & Denso',
-                  price: 'FROM 110 SAR',
-                  icon: '/categories/quick/ignition.svg'
+                  title: 'FLOOR MATS',
+                  desc: 'Custom fit for every car',
+                  img: '/categories/floor_mats.jpg',
+                  action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
                 },
                 {
-                  title: 'ENGINE OILS & FLUIDS',
-                  desc: 'Motul 300V, Castrol Edge, Coolant',
-                  price: 'FROM 45 SAR',
-                  icon: '/categories/quick/oils.svg'
+                  title: 'AIR FRESHENERS',
+                  desc: 'Little Trees, Areon, Aroma',
+                  img: '/categories/air_fresheners.jpg',
+                  action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
                 },
                 {
-                  title: 'TURBO CHARGERS',
-                  desc: 'Garrett Twin-Turbo & Actuators',
-                  price: 'FROM 3,200 SAR',
-                  icon: '/categories/quick/turbo.svg'
+                  title: 'JAECOO J7',
+                  desc: 'Side steps, mud flaps & more',
+                  img: '/categories/jaecoo_j7.jpg',
+                  action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
                 },
                 {
-                  title: 'PERFORMANCE EXHAUST',
-                  desc: 'HKS Hi-Power Stainless Steel',
-                  price: 'FROM 2,100 SAR',
-                  icon: '/categories/quick/exhaust.svg'
+                  title: 'ENGINE OILS',
+                  desc: 'Liqui Moly, Kixx, Mobil',
+                  img: '/categories/engine_oils.jpg',
+                  action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
+                },
+                {
+                  title: 'CHROME PARTS',
+                  desc: 'Trims, garnishes & handles',
+                  img: '/categories/chrome_parts.jpg',
+                  action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
                 }
-              ].map((item) => (
+              ].map((card, idx) => (
                 <div
-                  key={item.title}
-                  onClick={() => {
-                    const el = document.getElementById('catalog-products-section');
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  }}
+                  key={idx}
+                  onClick={card.action}
                   style={{
+                    flex: '0 0 190px',
+                    minWidth: '190px',
                     backgroundColor: '#ffffff',
                     borderRadius: '8px',
-                    padding: '14px 14px 12px 14px',
-                    boxShadow: '0 3px 12px rgba(0,0,0,0.08)',
-                    border: '1px solid #E2E2E2',
+                    border: '1px solid #DDDDDD',
+                    overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
                     cursor: 'pointer',
-                    transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease'
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+                    transition: 'transform 0.18s ease, box-shadow 0.18s ease'
                   }}
                   className="hover-lift"
                 >
-                  {/* Header Row: Icon + Title */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                  {/* Top Text Header */}
+                  <div style={{ padding: '12px 14px 6px 14px' }}>
                     <div style={{
-                      width: '28px',
-                      height: '28px',
-                      flexShrink: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <img
-                        src={item.icon}
-                        alt={item.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                      />
-                    </div>
-                    <span style={{
-                      fontSize: '11px',
+                      fontSize: '12px',
                       fontWeight: 800,
-                      textTransform: 'uppercase',
                       color: '#1A1A1A',
+                      textTransform: 'uppercase',
                       letterSpacing: '0.4px',
-                      lineHeight: '1.25'
+                      marginBottom: '2px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
                     }}>
-                      {item.title}
-                    </span>
+                      {card.title}
+                    </div>
+                    <div style={{
+                      fontSize: '10px',
+                      color: '#777777',
+                      lineHeight: '1.3',
+                      height: '26px',
+                      overflow: 'hidden'
+                    }}>
+                      {card.desc}
+                    </div>
                   </div>
 
-                  {/* Subtitle / brands */}
+                  {/* Product Image Area */}
                   <div style={{
-                    fontSize: '11px',
-                    color: '#666666',
-                    marginBottom: '10px',
-                    lineHeight: '1.35',
-                    minHeight: '28px'
-                  }}>
-                    {item.desc}
-                  </div>
-
-                  {/* Price Tag Footer */}
-                  <div style={{
-                    marginTop: 'auto',
+                    height: '110px',
+                    padding: '8px 12px 12px 12px',
                     display: 'flex',
-                    justifyContent: 'space-between',
                     alignItems: 'center',
-                    borderTop: '1px solid #F0F0F0',
-                    paddingTop: '6px'
+                    justifyContent: 'center',
+                    backgroundColor: '#ffffff'
                   }}>
-                    <span style={{ fontSize: '10px', color: '#888888', textTransform: 'uppercase', fontWeight: 600 }}>Price</span>
-                    <span style={{ fontSize: '11px', fontWeight: 900, color: '#E53935', letterSpacing: '0.2px' }}>
-                      {item.price}
-                    </span>
+                    <img
+                      src={card.img}
+                      alt={card.title}
+                      style={{
+                        maxHeight: '100%',
+                        maxWidth: '100%',
+                        objectFit: 'contain'
+                      }}
+                    />
                   </div>
                 </div>
               ))}
@@ -1662,7 +1690,7 @@ export function App() {
                   No Parts Found Matching This Filter
                 </h3>
                 <p style={{ fontSize: '13px', color: '#666666', maxWidth: '420px', margin: '0 auto 20px auto', lineHeight: '1.5' }}>
-                  We could not find any auto parts under this exact category tab. Try selecting "ALL" or submit a direct VIN request.
+                  We could not find any auto parts under this exact category tab. Try selecting "ALL" to browse the full catalog.
                 </p>
                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
                   <button
@@ -1672,28 +1700,13 @@ export function App() {
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '4px',
-                      padding: '10px 20px',
+                      padding: '10px 24px',
                       fontSize: '12px',
                       fontWeight: 700,
                       cursor: 'pointer'
                     }}
                   >
                     RESET FILTERS
-                  </button>
-                  <button
-                    onClick={() => setIsRequestModalOpen(true)}
-                    style={{
-                      backgroundColor: '#111111',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '4px',
-                      padding: '10px 20px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    REQUEST PART BY VIN
                   </button>
                 </div>
               </div>
@@ -1942,24 +1955,29 @@ export function App() {
                 </div>
               </div>
 
-              {/* Col 5: Newsletter */}
+              {/* Col 5: Get exclusive deals & updates (Matches 3rd screenshot) */}
               <div>
-                <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '14px', letterSpacing: '0.5px' }}>NEWSLETTER</div>
-                <p style={{ fontSize: '12px', color: '#999999', marginBottom: '12px' }}>
-                  Subscribe to receive discount alerts and new catalog arrivals.
-                </p>
-                <div style={{ display: 'flex', height: '36px' }}>
+                <div style={{ fontSize: '15px', fontWeight: 600, color: '#D5D5D5', marginBottom: '16px', letterSpacing: '0.2px' }}>
+                  Get exclusive deals & updates
+                </div>
+                <div style={{
+                  display: 'flex',
+                  height: '42px',
+                  backgroundColor: '#1E1E1E',
+                  borderRadius: '6px',
+                  border: '1px solid #2F2F2F',
+                  overflow: 'hidden'
+                }}>
                   <input
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder="Your email"
                     style={{
                       flex: 1,
-                      backgroundColor: '#1A1A1A',
-                      border: '1px solid #333333',
-                      borderRadius: '4px 0 0 4px',
-                      padding: '0 10px',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      padding: '0 14px',
                       color: '#ffffff',
-                      fontSize: '12px',
+                      fontSize: '13px',
                       outline: 'none'
                     }}
                   />
@@ -1967,13 +1985,14 @@ export function App() {
                     backgroundColor: '#E53935',
                     color: '#ffffff',
                     border: 'none',
-                    borderRadius: '0 4px 4px 0',
-                    padding: '0 16px',
-                    fontSize: '11px',
-                    fontWeight: 800,
-                    cursor: 'pointer'
+                    borderRadius: '0 6px 6px 0',
+                    padding: '0 20px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'background-color 0.15s ease'
                   }}>
-                    JOIN
+                    Join
                   </button>
                 </div>
               </div>
