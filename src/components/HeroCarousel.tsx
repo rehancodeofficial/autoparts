@@ -31,7 +31,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ lang, onShopNow, onE
       ctaAction: onShopNow,
       secondaryLabel: 'ORDER BY PART # / VIN',
       secondaryAction: onRequestPart,
-      badge: { title: '★ GCC RACING SPEC', subtitle: 'Genuine Parts Guaranteed', detail: 'Direct warehouse distribution in Riyadh & Jeddah' },
+      badge: { title: 'GCC RACING SPEC', subtitle: 'Genuine Parts Guaranteed', detail: 'Direct warehouse distribution in Riyadh & Jeddah' },
     },
     {
       image: '/hero/slide2.jpg',
@@ -40,7 +40,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ lang, onShopNow, onE
       subtitle: 'Garrett turbos, HKS exhaust systems, and forged internals — every part dyno-verified and shipped with OEM-grade warranty.',
       ctaLabel: 'SHOP TURBO KITS',
       ctaAction: onShopNow,
-      badge: { title: '★ DYNO TESTED', subtitle: '500+ HP Builds Available', detail: 'Professional installation partners across KSA' },
+      badge: { title: 'DYNO TESTED', subtitle: '500+ HP Builds Available', detail: 'Professional installation partners across KSA' },
     },
     {
       image: '/hero/slide3.jpg',
@@ -51,7 +51,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ lang, onShopNow, onE
       ctaAction: onShopNow,
       secondaryLabel: 'VIN LOOKUP',
       secondaryAction: onRequestPart,
-      badge: { title: '★ GCC RATED', subtitle: 'Desert-Proven Quality', detail: 'Tested at 55°C ambient conditions' },
+      badge: { title: 'GCC RATED', subtitle: 'Desert-Proven Quality', detail: 'Tested at 55°C ambient conditions' },
     },
   ];
 

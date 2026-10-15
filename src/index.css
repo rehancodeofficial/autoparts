@@ -345,3 +345,15 @@ svg {
 .toast-popup {
   animation: slideDownFade 0.3s ease-out forwards;
 }
+
+/* Hide scrollbars across all modern browsers */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  height: 0px !important;
+  width: 0px !important;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}

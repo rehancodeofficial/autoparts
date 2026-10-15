@@ -11,27 +11,28 @@ import { PartRequestModal } from './components/PartRequestModal';
 import { LoginPage } from './components/LoginPage';
 import { SignUpPage } from './components/SignUpPage';
 import { AccountPage } from './components/AccountPage';
+import { ProductDetailPage } from './components/ProductDetailPage';
 import { useAuth } from './context/AuthContext';
 import {
   Search, ShoppingCart, Phone, MessageSquare, ChevronRight, ChevronLeft,
   Car, ShieldCheck, Truck, RefreshCw, Headphones, Check, ArrowRight,
-  User as UserIcon, LogIn, UserPlus, LogOut, Package, MapPin, X, Flame, Sparkles, Menu
+  User as UserIcon, LogIn, UserPlus, LogOut, Package, MapPin, X, Flame, Sparkles, Menu, ChevronDown
 } from 'lucide-react';
 
 export function App() {
   const { user, logout } = useAuth();
   const [lang, setLang] = useState<'en' | 'ar'>('en');
-  const [view, setView] = useState<'store' | 'admin' | 'login' | 'signup' | 'account' | '404'>('store');
+  const [view, setView] = useState<'store' | 'admin' | 'login' | 'signup' | 'account' | '404' | 'product'>('store');
+  const [selectedPdpPart, setSelectedPdpPart] = useState<Part | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [intendedDestination, setIntendedDestination] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-  // Parts & Cart
-  const [parts, setParts] = useState<Part[]>(SAMPLE_PARTS);
-  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
-  const [cart, setCart] = useState<CartItem[]>([
-    { part: SAMPLE_PARTS[0], quantity: 1 }
-  ]);
+  // Parts & Cart (Cleared mock and dummy data)
+  const [parts, setParts] = useState<Part[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [activePart, setActivePart] = useState<Part | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
@@ -187,24 +188,17 @@ export function App() {
             style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', userSelect: 'none' }}
             onClick={() => setView('store')}
           >
-            {/* Geometric Hexagon Icon */}
-            <div style={{
-              width: '42px',
-              height: '42px',
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'linear-gradient(135deg, #E53935 0%, #D42B2B 100%)',
-              borderRadius: '10px',
-              boxShadow: '0 3px 10px rgba(229, 57, 53, 0.4)',
-              border: '2px solid rgba(255, 255, 255, 0.2)'
-            }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="12 2 2 8.5 2 15.5 12 22 22 15.5 22 8.5 12 2" />
-                <circle cx="12" cy="12" r="3.5" fill="#ffffff" />
-              </svg>
-            </div>
+            {/* Brand Logo Image from /favicon.png */}
+            <img
+              src="/favicon.png"
+              alt="AUTOPARTS"
+              style={{
+                width: '44px',
+                height: '44px',
+                objectFit: 'contain',
+                borderRadius: '8px'
+              }}
+            />
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{
@@ -281,7 +275,7 @@ export function App() {
             </div>
           </div>
 
-          {/* WhatsApp Icon */}
+          {/* Official WhatsApp Logo Icon */}
           <a
             href="https://wa.me/966501234567"
             target="_blank"
@@ -296,16 +290,18 @@ export function App() {
             }}
           >
             <div style={{
-              width: '32px',
-              height: '32px',
+              width: '34px',
+              height: '34px',
               borderRadius: '50%',
               backgroundColor: '#25D366',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 2px 6px rgba(37, 211, 102, 0.4)'
+              boxShadow: '0 2px 8px rgba(37, 211, 102, 0.45)'
             }}>
-              <MessageSquare size={17} color="#ffffff" />
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#ffffff">
+                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+              </svg>
             </div>
           </a>
 
@@ -391,68 +387,270 @@ export function App() {
           position: 'relative',
           zIndex: 40
         }}
-        onMouseLeave={() => setIsVehicleMenuOpen(false)}
+        onMouseLeave={() => {
+          setIsVehicleMenuOpen(false);
+          setActiveDropdown(null);
+        }}
       >
-        <div style={{
-          maxWidth: '1320px',
-          margin: '0 auto',
-          padding: '0 24px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '2px',
-          height: '46px',
-          overflowX: 'auto'
-        }}>
+        <div
+          className="no-scrollbar"
+          style={{
+            maxWidth: '1320px',
+            margin: '0 auto',
+            padding: '0 24px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2px',
+            height: '46px',
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
+        >
           {[
-            { label: 'HOME', action: () => setView('store') },
-            { label: 'SHOP BY VEHICLE', isDropdown: true, action: () => setIsVehicleMenuOpen(prev => !prev) },
-            { label: 'CAR CARE', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } },
-            { label: 'EXTERIOR', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } },
-            { label: 'LIGHTING', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } },
-            { label: 'INTERIOR', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } },
-            { label: 'MATS', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } },
-            { label: 'ELECTRONICS', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } },
-            { label: 'CAR PARTS', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } },
-            { label: 'OILS & FILTERS', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } },
-            { label: 'WHEELS & TYRES', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } },
-            { label: 'TOOLS', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } },
-            { label: 'BRANDS', action: () => { const el = document.getElementById('brands-grid-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } },
-            { label: 'DEALS', isRed: true, action: () => { const el = document.getElementById('featured-deals-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } },
+            { label: 'HOME', action: () => { setView('store'); setActiveDropdown(null); setIsVehicleMenuOpen(false); } },
+            { label: 'SHOP BY VEHICLE', isVehicleDropdown: true, action: () => { setIsVehicleMenuOpen(prev => !prev); setActiveDropdown(null); } },
+            {
+              label: 'CAR CARE',
+              items: [
+                { name: 'Ceramic Coatings & Sealants', count: '14 items' },
+                { name: 'Car Wash Shampoos & Foam', count: '28 items' },
+                { name: 'Detailing Sprays & Quick Wax', count: '19 items' },
+                { name: 'Microfiber Towels & Wash Mitts', count: '32 items' },
+                { name: 'Leather Cleaners & Conditioners', count: '12 items' },
+                { name: 'Tire Shine & Wheel Cleaners', count: '16 items' },
+                { name: 'Glass & Windshield Treatment', count: '9 items' }
+              ]
+            },
+            {
+              label: 'EXTERIOR',
+              items: [
+                { name: 'Carbon Fiber Spoilers & Wings', count: '24 items' },
+                { name: 'Front Bumpers & Splitters', count: '18 items' },
+                { name: 'Side Skirts & Extensions', count: '15 items' },
+                { name: 'Roof Racks & Cross Bars', count: '11 items' },
+                { name: 'Mud Flaps & Splash Guards', count: '14 items' },
+                { name: 'Door Visors & Deflectors', count: '22 items' }
+              ]
+            },
+            {
+              label: 'LIGHTING',
+              items: [
+                { name: 'LED Headlight Conversion Bulbs', count: '45 items' },
+                { name: 'Off-Road LED Light Bars', count: '20 items' },
+                { name: 'Fog Lamps & Daytime Running Lights', count: '18 items' },
+                { name: 'Smoked LED Tail Lights', count: '16 items' },
+                { name: 'Interior Ambient Ambient Kits', count: '12 items' }
+              ]
+            },
+            {
+              label: 'INTERIOR',
+              items: [
+                { name: 'Steering Wheel Covers & Alcantara', count: '18 items' },
+                { name: 'Custom Fit Seat Covers', count: '26 items' },
+                { name: 'Dashboard Mats & Sunshades', count: '14 items' },
+                { name: 'Center Console Organizers', count: '12 items' },
+                { name: 'Luxury Luxury Air Fresheners', count: '30 items' }
+              ]
+            },
+            {
+              label: 'MATS',
+              items: [
+                { name: '3D/5D All-Weather Floor Mats', count: '38 items' },
+                { name: 'Heavy-Duty Rubber Trunk Liners', count: '22 items' },
+                { name: 'Velour OEM Luxury Carpet Mats', count: '15 items' },
+                { name: 'Anti-Slip Dashboard Sticky Mats', count: '10 items' }
+              ]
+            },
+            {
+              label: 'ELECTRONICS',
+              items: [
+                { name: '4K Ultra-HD Dash Cams & Rear Cam', count: '14 items' },
+                { name: 'Wireless Apple CarPlay & Android Auto', count: '19 items' },
+                { name: 'OBD2 Diagnostic Scanners', count: '11 items' },
+                { name: 'High-Speed Fast Car Chargers', count: '25 items' },
+                { name: 'TPMS Tire Pressure Monitors', count: '8 items' }
+              ]
+            },
+            {
+              label: 'CAR PARTS',
+              items: [
+                { name: 'Brembo Ceramic Brake Pads & Rotors', count: '64 items' },
+                { name: 'Suspension Coilovers & Shocks', count: '32 items' },
+                { name: 'Alternators, Starters & Batteries', count: '28 items' },
+                { name: 'Turbochargers & Intercoolers', count: '19 items' },
+                { name: 'Radiators & Water Pumps', count: '22 items' },
+                { name: 'Clutches & Drivetrain Kits', count: '17 items' }
+              ]
+            },
+            {
+              label: 'OILS & FILTERS',
+              items: [
+                { name: 'Motul & Castrol Full Synthetic 5W-30 / 0W-20', count: '30 items' },
+                { name: 'OEM Engine Oil Filters', count: '48 items' },
+                { name: 'High-Flow Cabin Air & AC Filters', count: '36 items' },
+                { name: 'Transmission & Gearbox Fluids', count: '18 items' },
+                { name: 'DOT 5.1 Racing Brake Fluids', count: '12 items' },
+                { name: 'Long-Life Radiator Coolants', count: '15 items' }
+              ]
+            },
+            {
+              label: 'WHEELS & TYRES',
+              items: [
+                { name: 'Forged & Flow-Formed Alloy Wheels', count: '40 items' },
+                { name: 'All-Terrain & Desert Dune Tires', count: '28 items' },
+                { name: 'Wheel Spacers & Hubcentric Rings', count: '16 items' },
+                { name: 'Lug Nuts & Anti-Theft Lock Sets', count: '22 items' },
+                { name: 'Portable Tire Inflators & Gauges', count: '14 items' }
+              ]
+            },
+            {
+              label: 'TOOLS',
+              items: [
+                { name: 'Mechanic Socket & Ratchet Sets', count: '24 items' },
+                { name: 'Digital Torque Wrenches', count: '12 items' },
+                { name: 'Hydraulic Floor Jacks & Stands', count: '15 items' },
+                { name: 'Battery Boosters & Jump Starters', count: '18 items' },
+                { name: 'Pneumatic Impact Wrenches', count: '10 items' }
+              ]
+            },
+            {
+              label: 'BRANDS',
+              items: [
+                { name: 'Toyota Genuine OEM Parts', count: '500+ items' },
+                { name: 'Nissan Motor Parts', count: '350+ items' },
+                { name: 'Brembo Racing & Brakes', count: '120+ items' },
+                { name: 'Bilstein Suspension Germany', count: '85+ items' },
+                { name: 'Motul High-Tech Lubricants', count: '65+ items' },
+                { name: 'NGK Laser Iridium Plugs', count: '140+ items' },
+                { name: 'K&N High-Flow Air Filters', count: '90+ items' }
+              ]
+            },
+            { label: 'DEALS', isRed: true, action: () => { const el = document.getElementById('featured-deals-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setActiveDropdown(null); setIsVehicleMenuOpen(false); } },
           ].map((item) => {
-            const isVehicleActive = item.isDropdown && isVehicleMenuOpen;
+            const isVehicleActive = item.isVehicleDropdown && isVehicleMenuOpen;
+            const isNavDropdownActive = activeDropdown === item.label;
+            const isActive = isVehicleActive || isNavDropdownActive;
+
             return (
-              <button
+              <div
                 key={item.label}
-                onClick={item.action}
+                style={{ position: 'relative' }}
                 onMouseEnter={() => {
-                  if (item.isDropdown) setIsVehicleMenuOpen(true);
-                  else setIsVehicleMenuOpen(false);
-                }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  borderBottom: isVehicleActive ? '2px solid #E53935' : '2px solid transparent',
-                  color: item.isRed ? '#E53935' : isVehicleActive ? '#E53935' : '#D0D0D0',
-                  height: '46px',
-                  padding: '0 12px',
-                  fontSize: '11.5px',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  fontFamily: 'var(--font-ui)',
-                  transition: 'color 0.15s ease'
-                }}
-                onMouseOver={(e) => {
-                  if (!item.isRed && !isVehicleActive) (e.currentTarget as HTMLElement).style.color = '#ffffff';
-                }}
-                onMouseOut={(e) => {
-                  if (!item.isRed && !isVehicleActive) (e.currentTarget as HTMLElement).style.color = '#D0D0D0';
+                  if (item.isVehicleDropdown) {
+                    setIsVehicleMenuOpen(true);
+                    setActiveDropdown(null);
+                  } else if (item.items) {
+                    setActiveDropdown(item.label);
+                    setIsVehicleMenuOpen(false);
+                  } else {
+                    setActiveDropdown(null);
+                    setIsVehicleMenuOpen(false);
+                  }
                 }}
               >
-                {item.label}
-              </button>
+                <button
+                  onClick={() => {
+                    if (item.action) item.action();
+                    else if (item.items) {
+                      setActiveDropdown(prev => prev === item.label ? null : item.label);
+                    }
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: isActive ? '2px solid #E53935' : '2px solid transparent',
+                    color: item.isRed ? '#E53935' : isActive ? '#E53935' : '#D0D0D0',
+                    height: '46px',
+                    padding: '0 12px',
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    fontFamily: 'var(--font-ui)',
+                    transition: 'color 0.15s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                  onMouseOver={(e) => {
+                    if (!item.isRed && !isActive) (e.currentTarget as HTMLElement).style.color = '#ffffff';
+                  }}
+                  onMouseOut={(e) => {
+                    if (!item.isRed && !isActive) (e.currentTarget as HTMLElement).style.color = '#D0D0D0';
+                  }}
+                >
+                  <span>{item.label}</span>
+                  {item.items && (
+                    <ChevronDown size={12} color={isActive ? '#E53935' : '#888888'} />
+                  )}
+                </button>
+
+                {/* Standard Dropdown Flyout for category items */}
+                {activeDropdown === item.label && item.items && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '46px',
+                      left: 0,
+                      minWidth: '280px',
+                      backgroundColor: '#161616',
+                      borderTop: '2px solid #E53935',
+                      boxShadow: '0 12px 32px rgba(0,0,0,0.7)',
+                      padding: '12px 0',
+                      zIndex: 100,
+                      borderRadius: '0 0 8px 8px'
+                    }}
+                  >
+                    <div style={{
+                      padding: '4px 16px 8px 16px',
+                      fontSize: '10px',
+                      fontWeight: 800,
+                      color: '#E53935',
+                      letterSpacing: '1px',
+                      textTransform: 'uppercase',
+                      borderBottom: '1px solid #222222',
+                      marginBottom: '6px'
+                    }}>
+                      EXPLORE {item.label}
+                    </div>
+                    {item.items.map((sub, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => {
+                          setActiveDropdown(null);
+                          const el = document.getElementById('catalog-products-section');
+                          if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        style={{
+                          padding: '8px 16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          color: '#CCCCCC',
+                          fontSize: '12px',
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          transition: 'background 0.15s, color 0.15s'
+                        }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.06)';
+                          (e.currentTarget as HTMLElement).style.color = '#ffffff';
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                          (e.currentTarget as HTMLElement).style.color = '#CCCCCC';
+                        }}
+                      >
+                        <span>{sub.name}</span>
+                        <span style={{ fontSize: '10px', color: '#666666' }}>{sub.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
@@ -612,6 +810,7 @@ export function App() {
               </div>
             </div>
           </div>
+        )}
         {/* Mobile Navigation Drawer */}
         {isMobileMenuOpen && (
           <div
@@ -778,6 +977,15 @@ export function App() {
             onUpdateOrderStatus={(id, st) => setOrders(prev => prev.map(o => o.id === id ? { ...o, deliveryStatus: st } : o))}
             onRefreshAllData={() => { }}
             lang={lang}
+          />
+        </main>
+      ) : view === 'product' ? (
+        <main style={{ flex: 1 }}>
+          <ProductDetailPage
+            part={selectedPdpPart}
+            selectedVehicle={selectedVehicle}
+            onBack={() => setView('store')}
+            onAddToCart={handleAddToCart}
           />
         </main>
       ) : (
@@ -1403,115 +1611,93 @@ export function App() {
               </div>
             </div>
 
-            {/* 4-Col Product Cards */}
-            <div style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '0 0 8px 8px',
-              padding: '20px',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '16px'
-            }}>
-              {trendingProducts.map(p => (
-                <PartCard
-                  key={p.id}
-                  part={p}
-                  selectedVehicle={selectedVehicle}
-                  onAddToCart={handleAddToCart}
-                  onViewDetails={setActivePart}
-                  lang={lang}
-                />
-              ))}
-            </div>
-          </section>
-
-          {/* =========================================================================
-              9. MOTORING & MAINTENANCE GUIDES (3 Blog Cards)
-              ========================================================================= */}
-          <section style={{ maxWidth: '1200px', margin: '0 auto 40px auto', padding: '0 24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '20px', fontWeight: 900, textTransform: 'uppercase', color: '#1A1A1A', margin: 0 }}>
-                MOTORING & MAINTENANCE GUIDES
-              </h2>
-              <div style={{ fontSize: '12px', color: '#888888', fontWeight: 600 }}>
-                Written by Certified Master Technicians
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-              {[
-                {
-                  tag: 'MAINTENANCE',
-                  title: 'How to Choose the Right Ceramic Brake Pads for Gulf Summer Temperatures',
-                  desc: 'Discover how rotor thickness and thermal-dissipating brake lubricants protect brake fluid from boiling during 50°C track or dune runs.',
-                  img: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=500&q=80',
-                  time: '5 min read'
-                },
-                {
-                  tag: 'PERFORMANCE',
-                  title: 'LC300 Twin-Turbo Upgrade Guide: Power Gains vs Fuel Economy',
-                  desc: 'Comprehensive review of cat-back exhaust systems, high-flow air filters and remap options for the 3.5L Twin-Turbo V35A engine.',
-                  img: 'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?w=500&q=80',
-                  time: '7 min read'
-                },
-                {
-                  tag: 'OFF-ROAD',
-                  title: 'Step-by-Step Suspension Lift Kit Installation for Dune Bashing',
-                  desc: 'Everything you need to know about spring rates, reservoir shocks and control arms required for safety in the desert.',
-                  img: 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=500&q=80',
-                  time: '6 min read'
-                }
-              ].map(post => (
-                <div
-                  key={post.title}
-                  style={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-                    border: '1px solid #DDDDDD'
-                  }}
-                  className="hover-lift"
-                >
-                  <div style={{ height: '180px', overflow: 'hidden' }}>
-                    <img src={post.img} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
-                  <div style={{ padding: '16px' }}>
-                    <div style={{ fontSize: '10px', fontWeight: 700, color: '#FF6600', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>
-                      {post.tag}
-                    </div>
-                    <div style={{ fontSize: '14px', fontWeight: 800, color: '#1A1A1A', lineHeight: '1.3', marginBottom: '8px', height: '36px', overflow: 'hidden' }}>
-                      {post.title}
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#666666', lineHeight: '18px', marginBottom: '14px', height: '54px', overflow: 'hidden' }}>
-                      {post.desc}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f0f0f0', paddingTop: '10px', fontSize: '11px', color: '#888888' }}>
-                      <span>{post.time}</span>
-                      <span style={{ color: '#E53935', fontWeight: 700 }}>Read Article &gt;</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ textAlign: 'center', marginTop: '24px' }}>
-              <button style={{
-                backgroundColor: '#1A1A1A',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '50px',
-                padding: '12px 40px',
-                fontSize: '12px',
-                fontWeight: 800,
-                textTransform: 'uppercase',
-                letterSpacing: '1px',
-                cursor: 'pointer'
+            {/* 4-Col Product Cards or Empty State */}
+            {trendingProducts.length > 0 ? (
+              <div style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '0 0 8px 8px',
+                padding: '20px',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: '16px'
               }}>
-                VIEW ALL MOTOGUIDE BLOGS
-              </button>
-            </div>
+                {trendingProducts.map(p => (
+                  <PartCard
+                    key={p.id}
+                    part={p}
+                    selectedVehicle={selectedVehicle}
+                    onAddToCart={handleAddToCart}
+                    onViewDetails={(item) => {
+                      setSelectedPdpPart(item);
+                      setView('product');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    lang={lang}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '0 0 8px 8px',
+                padding: '48px 24px',
+                textAlign: 'center',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
+              }}>
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  backgroundColor: '#F5F5F5',
+                  color: '#999999',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px auto'
+                }}>
+                  <Package size={28} />
+                </div>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#1A1A1A', marginBottom: '8px', textTransform: 'uppercase' }}>
+                  No Parts Found Matching This Filter
+                </h3>
+                <p style={{ fontSize: '13px', color: '#666666', maxWidth: '420px', margin: '0 auto 20px auto', lineHeight: '1.5' }}>
+                  We could not find any auto parts under this exact category tab. Try selecting "ALL" or submit a direct VIN request.
+                </p>
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                  <button
+                    onClick={() => setTrendingTab('all')}
+                    style={{
+                      backgroundColor: '#E53935',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '10px 20px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    RESET FILTERS
+                  </button>
+                  <button
+                    onClick={() => setIsRequestModalOpen(true)}
+                    style={{
+                      backgroundColor: '#111111',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '10px 20px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    REQUEST PART BY VIN
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
 
           {/* =========================================================================
@@ -1602,120 +1788,6 @@ export function App() {
           </section>
 
           {/* =========================================================================
-              11. ALLOY WHEELS & TIRES ROW (5 Products: Volk TE37, Method, BFGoodrich KO3, Michelin, Advan)
-              ========================================================================= */}
-          <section style={{ maxWidth: '1200px', margin: '0 auto 40px auto', padding: '0 24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <div>
-                <h2 style={{ fontSize: '18px', fontWeight: 900, textTransform: 'uppercase', color: '#1A1A1A', margin: 0 }}>
-                  ALLOY WHEELS & TIRES
-                </h2>
-                <div style={{ fontSize: '11px', color: '#888888' }}>
-                  Forged off-road & track lightweight options for all terrains
-                </div>
-              </div>
-              <div style={{ fontSize: '11px', color: '#E53935', fontWeight: 700, cursor: 'pointer' }}>
-                VIEW ALL 240+ &gt;
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px' }}>
-              {wheelProducts.map(p => (
-                <div
-                  key={p.id}
-                  onClick={() => setActivePart(p)}
-                  style={{
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #DDDDDD',
-                    borderRadius: '6px',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    cursor: 'pointer'
-                  }}
-                  className="hover-lift"
-                >
-                  <div style={{ height: '140px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <img src={p.images[0]} alt={p.nameEn} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-                  </div>
-                  <div style={{ padding: '10px', borderTop: '1px solid #f0f0f0', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ fontSize: '10px', color: '#888888', fontWeight: 700 }}>{p.brand}</div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#1A1A1A', height: '32px', overflow: 'hidden', lineHeight: '16px' }}>
-                      {p.nameEn}
-                    </div>
-                    <div style={{ marginTop: 'auto', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 800, color: '#E53935' }}>SAR {p.price}</span>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleAddToCart(p); }}
-                        style={{ background: '#111111', color: '#fff', border: 'none', borderRadius: '3px', padding: '3px 8px', fontSize: '11px', cursor: 'pointer' }}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* =========================================================================
-              12. ROUTINE SERVICE & FILTERS (5 Products: Toyota filter, Air Filter, Cabin filter, Castrol, Coolant)
-              ========================================================================= */}
-          <section style={{ maxWidth: '1200px', margin: '0 auto 40px auto', padding: '0 24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <div>
-                <h2 style={{ fontSize: '18px', fontWeight: 900, textTransform: 'uppercase', color: '#1A1A1A', margin: 0 }}>
-                  ROUTINE SERVICE & FILTERS
-                </h2>
-                <div style={{ fontSize: '11px', color: '#888888' }}>
-                  Original OEM replacements for regular oil changes and scheduled maintenance
-                </div>
-              </div>
-              <div style={{ fontSize: '11px', color: '#E53935', fontWeight: 700, cursor: 'pointer' }}>
-                VIEW ALL 410+ &gt;
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px' }}>
-              {filterProducts.map(p => (
-                <div
-                  key={p.id}
-                  onClick={() => setActivePart(p)}
-                  style={{
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #DDDDDD',
-                    borderRadius: '6px',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    cursor: 'pointer'
-                  }}
-                  className="hover-lift"
-                >
-                  <div style={{ height: '140px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <img src={p.images[0]} alt={p.nameEn} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-                  </div>
-                  <div style={{ padding: '10px', borderTop: '1px solid #f0f0f0', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ fontSize: '10px', color: '#888888', fontWeight: 700 }}>{p.brand}</div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#1A1A1A', height: '32px', overflow: 'hidden', lineHeight: '16px' }}>
-                      {p.nameEn}
-                    </div>
-                    <div style={{ marginTop: 'auto', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 800, color: '#E53935' }}>SAR {p.price}</span>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleAddToCart(p); }}
-                        style={{ background: '#111111', color: '#fff', border: 'none', borderRadius: '3px', padding: '3px 8px', fontSize: '11px', cursor: 'pointer' }}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* =========================================================================
               13. ORANGE CTA BAND ("Can't Find Your Part Or Chassis Number?")
               ========================================================================= */}
           <section style={{
@@ -1725,7 +1797,6 @@ export function App() {
             textAlign: 'center'
           }}>
             <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-              <div style={{ fontSize: '28px', marginBottom: '8px' }}>📍</div>
               <h2 style={{ fontSize: '26px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
                 CAN'T FIND YOUR CAR PART OR CHASSIS NUMBER?
               </h2>
@@ -1746,12 +1817,14 @@ export function App() {
                   textTransform: 'uppercase',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: '10px',
                   textDecoration: 'none',
                   boxShadow: '0 4px 14px rgba(0,0,0,0.2)'
                 }}
               >
-                <MessageSquare size={16} color="#25D366" />
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#25D366">
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                </svg>
                 <span>CHAT WITH US ON WHATSAPP NOW</span>
               </a>
             </div>
@@ -1805,32 +1878,30 @@ export function App() {
               {/* Col 1: Wordmark & Info */}
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                  <div style={{
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'linear-gradient(135deg, #E53935 0%, #D42B2B 100%)',
-                    borderRadius: '8px',
-                  }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.4">
-                      <polygon points="12 2 2 8.5 2 15.5 12 22 22 15.5 22 8.5 12 2" />
-                      <circle cx="12" cy="12" r="3" fill="#ffffff" />
-                    </svg>
-                  </div>
+                  <img
+                    src="/favicon.png"
+                    alt="AUTOPARTS"
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      objectFit: 'contain',
+                      borderRadius: '6px'
+                    }}
+                  />
                   <span style={{ fontSize: '20px', fontWeight: 900, color: '#ffffff' }}>AUTOPARTS</span>
                 </div>
                 <p style={{ fontSize: '12px', color: '#999999', lineHeight: '18px', marginBottom: '14px' }}>
                   No.1 Online Auto Store in Saudi Arabia. Supplying verified OEM & performance parts across the Kingdom.
                 </p>
-                <div style={{ fontSize: '11px', color: '#777777', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span>📍 Riyadh Distribution Hub, Anas Ibn Malik Rd, KSA</span>
-                  <span>
-                    📞 Phone: <a href="tel:+9668001249900" style={{ color: '#E53935', textDecoration: 'none' }}>+966 800 124 9900</a>
+                <div style={{ fontSize: '11px', color: '#777777', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <MapPin size={13} color="#E53935" /> Riyadh Distribution Hub, Anas Ibn Malik Rd, KSA
                   </span>
-                  <span>
-                    ✉️ Email: <a href="mailto:support@autoparts.sa" style={{ color: '#E53935', textDecoration: 'none' }}>support@autoparts.sa</a>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Phone size={13} color="#E53935" /> Phone: <a href="tel:+9668001249900" style={{ color: '#E53935', textDecoration: 'none' }}>+966 800 124 9900</a>
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <MessageSquare size={13} color="#E53935" /> Email: <a href="mailto:support@autoparts.sa" style={{ color: '#E53935', textDecoration: 'none' }}>support@autoparts.sa</a>
                   </span>
                 </div>
               </div>
