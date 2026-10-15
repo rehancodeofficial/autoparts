@@ -149,9 +149,10 @@ export function App() {
       }
       return [...prev, { part, quantity: 1 }];
     });
-    setToastMessage({ text: `Added "${part.name}" to cart!`, type: 'success' });
+    const partName = part.nameEn || (part as any).name || 'Item';
+    setToastMessage({ text: `Added "${partName}" to cart!`, type: 'success' });
     setTimeout(() => {
-      setToastMessage(prev => prev?.text.includes(part.name) ? null : prev);
+      setToastMessage(prev => prev?.text.includes(partName) ? null : prev);
     }, 3500);
   };
 
@@ -608,7 +609,8 @@ export function App() {
             { label: 'DEALS', isRed: true, action: () => { const el = document.getElementById('featured-deals-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setActiveDropdown(null); setIsVehicleMenuOpen(false); } },
             { label: 'CONTACT US', action: () => { setView('contact'); setActiveDropdown(null); setIsVehicleMenuOpen(false); window.scrollTo(0, 0); } },
           ].map((item) => {
-            const isVehicleActive = item.isVehicleDropdown && isVehicleMenuOpen;
+            const hasVehicleDropdown = !!(item as any).isVehicleDropdown;
+            const isVehicleActive = hasVehicleDropdown && isVehicleMenuOpen;
             const isNavDropdownActive = activeDropdown === item.label;
             const isActive = isVehicleActive || isNavDropdownActive;
 
@@ -617,7 +619,7 @@ export function App() {
                 key={item.label}
                 style={{ position: 'static', flexShrink: 0 }}
                 onMouseEnter={() => {
-                  if (item.isVehicleDropdown) {
+                  if (hasVehicleDropdown) {
                     setIsVehicleMenuOpen(true);
                     setActiveDropdown(null);
                   } else if (item.items) {
@@ -2322,6 +2324,13 @@ export function App() {
         onOrderPlaced={(newOrder) => {
           setOrders(prev => [newOrder, ...prev]);
           setCart([]);
+        }}
+        onUpdateQuantity={(partId, newQty) => {
+          if (newQty <= 0) {
+            setCart(prev => prev.filter(item => item.part.id !== partId));
+          } else {
+            setCart(prev => prev.map(item => item.part.id === partId ? { ...item, quantity: newQty } : item));
+          }
         }}
         lang={lang}
       />

@@ -78,30 +78,38 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   // Price calculations
   const price = part ? part.price : 4890;
   const originalPrice = 5450;
-  const title = part ? part.name : 'Brembo GT 6-Piston Big Brake Kit - Front 380mm Drilled (Monobloc 2-Piece)';
-  const partNumber = part ? part.partNumber : 'BR-98421-KSA';
+  const title = part ? (part.nameEn || (part as any).name) : 'Brembo GT 6-Piston Big Brake Kit - Front 380mm Drilled (Monobloc 2-Piece)';
+  const partNumber = part ? (part.sku || part.oemNumber || (part as any).partNumber) : 'BR-98421-KSA';
 
-  const defaultPartObject: Part = part || {
+  const defaultPartObject: Part = part || ({
     id: 'pdp-brembo-gt-6p',
-    name: 'Brembo GT 6-Piston Big Brake Kit - Front 380mm Drilled',
-    partNumber: 'BR-98421-KSA',
-    oemReference: '43512-60200',
-    category: 'Brakes & Rotors',
+    sku: 'BR-98421-KSA',
+    oemNumber: '43512-60200',
+    alternateNumbers: ['4351260200'],
+    nameEn: 'Brembo GT 6-Piston Big Brake Kit - Front 380mm Drilled',
+    nameAr: 'طقم فرامل بريمبو جي تي 6 مكابس',
+    category: 'Braking Systems',
     categorySlug: 'brakes',
-    brand: 'Brembo',
+    brand: 'Brembo Racing',
+    condition: 'Genuine Original',
     price: 4890,
-    inStock: true,
+    stock: 12,
+    warehouseLocation: 'Riyadh Central Hub',
     rating: 4.9,
-    reviewsCount: 128,
+    reviewCount: 128,
     images: images,
-    description: 'High-performance Brembo Gran Turismo 6-piston monobloc front brake caliper with 380mm drilled floating rotors.',
-    fitment: [
-      { make: 'Toyota', model: 'Land Cruiser (LC300)', yearFrom: 2022, yearTo: 2025 },
-      { make: 'Lexus', model: 'LX600', yearFrom: 2022, yearTo: 2025 },
-      { make: 'Nissan', model: 'Patrol Y62', yearFrom: 2010, yearTo: 2024 }
+    descriptionEn: 'High-performance Brembo Gran Turismo 6-piston monobloc front brake caliper with 380mm drilled floating rotors.',
+    descriptionAr: 'طقم فرامل عالي الأداء مع أقراص عائمة مهواة.',
+    specifications: { 'Origin': 'Italy', 'Rotor': '380mm' },
+    fitments: [
+      { make: 'Toyota', model: 'Land Cruiser (LC300)', years: [2022, 2023, 2024, 2025] },
+      { make: 'Lexus', model: 'LX600', years: [2022, 2023, 2024, 2025] },
+      { make: 'Nissan', model: 'Patrol Y62', years: [2018, 2019, 2020, 2021, 2022, 2023, 2024] }
     ],
-    qualityGrade: 'oem'
-  };
+    qualityGrade: 'GRADE_A',
+    warranty: '24 Months Official Warranty',
+    deliveryDays: 'Same-day Riyadh, 24-48h KSA'
+  } as Part);
 
   return (
     <div style={{ backgroundColor: '#F8F9FA', minHeight: '100vh', paddingBottom: '90px' }}>
