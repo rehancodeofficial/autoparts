@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { HeroCarousel } from './components/HeroCarousel';
 import { Part, Vehicle, CartItem, Order, PartRequest, VehicleMake, PartCategory, PartBrand, QualityGradeConfig } from './types';
 import { SAMPLE_PARTS, INITIAL_ORDERS, POPULAR_VEHICLES } from './data/mockData';
@@ -28,6 +28,8 @@ export function App() {
   const [intendedDestination, setIntendedDestination] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const navbarRef = useRef<HTMLDivElement>(null);
+  const [navbarBottom, setNavbarBottom] = useState(93);
 
   // Parts & Cart (Cleared mock and dummy data)
   const [parts, setParts] = useState<Part[]>([]);
@@ -107,6 +109,23 @@ export function App() {
   const filterProducts = useMemo(() => {
     return parts.filter(p => p.categorySlug === 'filters' || p.categorySlug === 'fluids').slice(0, 5);
   }, [parts]);
+
+  // Track navbar bottom for dropdown positioning
+  useEffect(() => {
+    const updateNavbarBottom = () => {
+      if (navbarRef.current) {
+        const rect = navbarRef.current.getBoundingClientRect();
+        setNavbarBottom(rect.bottom);
+      }
+    };
+    updateNavbarBottom();
+    window.addEventListener('scroll', updateNavbarBottom, { passive: true });
+    window.addEventListener('resize', updateNavbarBottom);
+    return () => {
+      window.removeEventListener('scroll', updateNavbarBottom);
+      window.removeEventListener('resize', updateNavbarBottom);
+    };
+  }, []);
 
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#EEEEEE' }}>
@@ -344,11 +363,14 @@ export function App() {
 
       {/* Main Navbar Links (#111111 Dark Bar) with Vehicle Mega Menu Dropdown */}
       <div
+        ref={navbarRef}
         style={{
           backgroundColor: '#111111',
           borderBottom: '1px solid #1E1E1E',
-          position: 'relative',
-          zIndex: 40
+          position: 'sticky',
+          top: 0,
+          zIndex: 999,
+          overflow: 'visible'
         }}
         onMouseLeave={() => {
           setIsVehicleMenuOpen(false);
@@ -356,24 +378,21 @@ export function App() {
         }}
       >
         <div
-          className="no-scrollbar"
           style={{
             maxWidth: '1320px',
             margin: '0 auto',
-            padding: '0 24px',
+            padding: '0 4px',
             display: 'flex',
             alignItems: 'center',
-            gap: '2px',
+            gap: '0px',
             height: '46px',
-            overflowX: 'auto',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none'
+            overflow: 'visible',
+            flexWrap: 'nowrap'
           }}
         >
           {[
             { label: 'HOME', action: () => { setView('store'); setActiveDropdown(null); setIsVehicleMenuOpen(false); } },
             { label: 'ABOUT US', action: () => { const el = document.getElementById('part-finder-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setActiveDropdown(null); setIsVehicleMenuOpen(false); } },
-            { label: 'SHOP BY VEHICLE', isVehicleDropdown: true, action: () => { setIsVehicleMenuOpen(prev => !prev); setActiveDropdown(null); } },
             {
               label: 'CAR CARE',
               items: [
@@ -404,7 +423,7 @@ export function App() {
                 { name: 'Off-Road LED Light Bars', count: '20 items' },
                 { name: 'Fog Lamps & Daytime Running Lights', count: '18 items' },
                 { name: 'Smoked LED Tail Lights', count: '16 items' },
-                { name: 'Interior Ambient Ambient Kits', count: '12 items' }
+                { name: 'Interior Ambient Kits', count: '12 items' }
               ]
             },
             {
@@ -414,26 +433,7 @@ export function App() {
                 { name: 'Custom Fit Seat Covers', count: '26 items' },
                 { name: 'Dashboard Mats & Sunshades', count: '14 items' },
                 { name: 'Center Console Organizers', count: '12 items' },
-                { name: 'Luxury Luxury Air Fresheners', count: '30 items' }
-              ]
-            },
-            {
-              label: 'MATS',
-              items: [
-                { name: '3D/5D All-Weather Floor Mats', count: '38 items' },
-                { name: 'Heavy-Duty Rubber Trunk Liners', count: '22 items' },
-                { name: 'Velour OEM Luxury Carpet Mats', count: '15 items' },
-                { name: 'Anti-Slip Dashboard Sticky Mats', count: '10 items' }
-              ]
-            },
-            {
-              label: 'ELECTRONICS',
-              items: [
-                { name: '4K Ultra-HD Dash Cams & Rear Cam', count: '14 items' },
-                { name: 'Wireless Apple CarPlay & Android Auto', count: '19 items' },
-                { name: 'OBD2 Diagnostic Scanners', count: '11 items' },
-                { name: 'High-Speed Fast Car Chargers', count: '25 items' },
-                { name: 'TPMS Tire Pressure Monitors', count: '8 items' }
+                { name: 'Luxury Air Fresheners', count: '30 items' }
               ]
             },
             {
@@ -469,16 +469,6 @@ export function App() {
               ]
             },
             {
-              label: 'TOOLS',
-              items: [
-                { name: 'Mechanic Socket & Ratchet Sets', count: '24 items' },
-                { name: 'Digital Torque Wrenches', count: '12 items' },
-                { name: 'Hydraulic Floor Jacks & Stands', count: '15 items' },
-                { name: 'Battery Boosters & Jump Starters', count: '18 items' },
-                { name: 'Pneumatic Impact Wrenches', count: '10 items' }
-              ]
-            },
-            {
               label: 'BRANDS',
               items: [
                 { name: 'Toyota Genuine OEM Parts', count: '500+ items' },
@@ -500,7 +490,7 @@ export function App() {
             return (
               <div
                 key={item.label}
-                style={{ position: 'relative' }}
+                style={{ position: 'static', flexShrink: 0 }}
                 onMouseEnter={() => {
                   if (item.isVehicleDropdown) {
                     setIsVehicleMenuOpen(true);
@@ -557,15 +547,15 @@ export function App() {
                 {activeDropdown === item.label && item.items && (
                   <div
                     style={{
-                      position: 'absolute',
-                      top: '46px',
-                      left: 0,
+                      position: 'fixed',
+                      top: `${navbarBottom}px`,
+                      left: 'auto',
                       minWidth: '280px',
                       backgroundColor: '#161616',
                       borderTop: '2px solid #E53935',
                       boxShadow: '0 12px 32px rgba(0,0,0,0.7)',
                       padding: '12px 0',
-                      zIndex: 100,
+                      zIndex: 9999,
                       borderRadius: '0 0 8px 8px'
                     }}
                   >
@@ -624,8 +614,8 @@ export function App() {
         {isVehicleMenuOpen && (
           <div
             style={{
-              position: 'absolute',
-              top: '46px',
+              position: 'fixed',
+              top: `${navbarBottom}px`,
               left: 0,
               right: 0,
               backgroundColor: '#161616',
@@ -633,7 +623,7 @@ export function App() {
               borderBottom: '2px solid #E53935',
               boxShadow: '0 15px 40px rgba(0,0,0,0.6)',
               padding: '24px 32px 36px 32px',
-              zIndex: 100
+              zIndex: 9999
             }}
           >
             <div style={{ maxWidth: '1320px', margin: '0 auto' }}>
@@ -1089,6 +1079,42 @@ export function App() {
                   title: 'CHROME PARTS',
                   desc: 'Trims, garnishes & handles',
                   img: '/categories/chrome_parts.jpg',
+                  action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
+                },
+                {
+                  title: 'SEAT COVERS',
+                  desc: 'Custom fit, leather & fabric',
+                  img: '/categories/seat_covers.jpg',
+                  action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
+                },
+                {
+                  title: 'DASH CAMS',
+                  desc: '4K & dual-lens recording',
+                  img: '/categories/dash_cams.jpg',
+                  action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
+                },
+                {
+                  title: 'BRAKE PADS',
+                  desc: 'Brembo, Akebono & Advics',
+                  img: '/categories/brake_pads.jpg',
+                  action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
+                },
+                {
+                  title: 'LED LIGHTS',
+                  desc: 'Headlights, fog & interior',
+                  img: '/categories/led_lights.jpg',
+                  action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
+                },
+                {
+                  title: 'SUSPENSION',
+                  desc: 'Coilovers, shocks & springs',
+                  img: '/categories/suspension.jpg',
+                  action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
+                },
+                {
+                  title: 'EXHAUST SYSTEMS',
+                  desc: 'HKS, Borla & custom tips',
+                  img: '/categories/exhaust.jpg',
                   action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
                 }
               ].map((card, idx) => (

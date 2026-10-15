@@ -75,10 +75,10 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ lang, onShopNow, onE
     goToSlide((currentSlide - 1 + slides.length) % slides.length);
   }, [currentSlide, goToSlide, slides.length]);
 
-  // Auto-advance every 2.5 seconds (2-3 seconds as requested)
+  // Auto-advance every 5 seconds as requested
   useEffect(() => {
     if (isPaused) return;
-    intervalRef.current = setInterval(nextSlide, 2500);
+    intervalRef.current = setInterval(nextSlide, 5000);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
@@ -320,7 +320,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ lang, onShopNow, onE
           style={{
             height: '100%',
             backgroundColor: '#E53935',
-            animation: isPaused ? 'none' : 'heroProgress 2.5s linear forwards',
+            animation: isPaused ? 'none' : 'heroProgress 5s linear forwards',
             width: isPaused ? undefined : undefined,
           }}
         />
