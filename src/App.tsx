@@ -15,6 +15,7 @@ import { ProductDetailPage } from './components/ProductDetailPage';
 import { AboutUsPage } from './components/AboutUsPage';
 import { ContactUsPage } from './components/ContactUsPage';
 import { LegalPage } from './components/LegalPage';
+import { AdminLoginPage } from './components/AdminLoginPage';
 import { useAuth } from './context/AuthContext';
 import {
   Search, ShoppingCart, Phone, MessageSquare, ChevronRight, ChevronLeft,
@@ -25,7 +26,10 @@ import {
 export function App() {
   const { user, logout } = useAuth();
   const [lang, setLang] = useState<'en' | 'ar'>('en');
-  const [view, setView] = useState<'store' | 'admin' | 'login' | 'signup' | 'account' | '404' | 'product' | 'about' | 'contact' | 'terms' | 'privacy' | 'cookies'>('store');
+  const [view, setView] = useState<'store' | 'admin' | 'admin-login' | 'login' | 'signup' | 'account' | '404' | 'product' | 'about' | 'contact' | 'terms' | 'privacy' | 'cookies'>('store');
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
+    return sessionStorage.getItem('autoparts_admin_authenticated') === 'true';
+  });
   const [selectedPdpPart, setSelectedPdpPart] = useState<Part | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [intendedDestination, setIntendedDestination] = useState<string | null>(null);
@@ -34,14 +38,83 @@ export function App() {
   const navbarRef = useRef<HTMLDivElement>(null);
   const [navbarBottom, setNavbarBottom] = useState(93);
 
-  // Parts & Cart (Cleared mock and dummy data)
-  const [parts, setParts] = useState<Part[]>([]);
+  // Initial 2 test products for testing
+  const [parts, setParts] = useState<Part[]>([
+    {
+      id: 'test-part-01',
+      sku: 'BRK-BREM-GT6',
+      oemNumber: '1N1.9008A',
+      alternateNumbers: ['BREM-GT6-RED'],
+      nameEn: 'Brembo GT-R 6-Piston Big Brake Kit',
+      nameAr: 'طقم فرامل بريمبو جي تي-آر 6 مكابس عالي الأداء',
+      category: 'Braking Systems',
+      categorySlug: 'brakes',
+      brand: 'Brembo Racing',
+      condition: 'Genuine Original',
+      qualityGrade: 'GRADE_A',
+      price: 3499.00,
+      originalPrice: 4200.00,
+      stock: 12,
+      warehouseLocation: 'Riyadh Central Distribution Hub',
+      rating: 5.0,
+      reviewCount: 24,
+      images: [
+        'https://images.unsplash.com/photo-1600790142055-619df03207e6?auto=format&fit=crop&w=800&q=80'
+      ],
+      descriptionEn: 'High-performance forged monobloc 6-piston caliper big brake kit engineered for extreme desert heat and track braking.',
+      descriptionAr: 'طقم فرامل رياضي عالي التحمل مخصص لأقسى الظروف ودرجات الحرارة العالية.',
+      specifications: { 'Origin': 'Italy', 'Rotor': '380mm Floating Slotted' },
+      fitments: [
+        { make: 'Toyota', model: 'Land Cruiser (LC300)', years: [2021, 2022, 2023, 2024, 2025, 2026] }
+      ],
+      warranty: '24 Months Official Warranty',
+      deliveryDays: 'Same-day Riyadh, 24-48h KSA',
+      isFeatured: true,
+      isDeal: true,
+      dealBadge: '17% OFF'
+    } as any,
+    {
+      id: 'test-part-02',
+      sku: 'FIL-DENSO-OEM',
+      oemNumber: '87139-02090',
+      alternateNumbers: ['CF-10285'],
+      nameEn: 'Denso Activated Carbon OEM Cabin Filter',
+      nameAr: 'فلتر مكيف هواء الكابينة مع الكربون المنشط من دينسو',
+      category: 'Filters & Intake',
+      categorySlug: 'filters',
+      brand: 'Denso OEM',
+      condition: 'Genuine Original',
+      qualityGrade: 'GRADE_A',
+      price: 115.00,
+      originalPrice: 145.00,
+      stock: 35,
+      warehouseLocation: 'Jeddah Regional Logistics Center',
+      rating: 4.9,
+      reviewCount: 42,
+      images: [
+        'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=800&q=80'
+      ],
+      descriptionEn: 'Original equipment multi-layer pollen and PM2.5 micro-filter element with activated carbon deodorizing granules.',
+      descriptionAr: 'فلتر كابينة أصلي متعدد الطبقات لعزل الأتربة وحبوب اللقاح والغبار مع حبيبات كربون نشط.',
+      specifications: { 'Origin': 'Japan', 'Type': 'PM2.5 Activated Carbon' },
+      fitments: [
+        { make: 'Toyota', model: 'Camry', years: [2018, 2019, 2020, 2021, 2022, 2023, 2024] },
+        { make: 'Lexus', model: 'ES350', years: [2019, 2020, 2021, 2022, 2023, 2024] }
+      ],
+      warranty: '12 Months Official Warranty',
+      deliveryDays: 'Same-day Riyadh, 24-48h KSA',
+      isFeatured: true,
+      isDeal: false
+    } as any
+  ]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [activePart, setActivePart] = useState<Part | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [isVehicleMenuOpen, setIsVehicleMenuOpen] = useState(false);
+  const [showAdminLogoutConfirm, setShowAdminLogoutConfirm] = useState(false);
+  const [pendingNavView, setPendingNavView] = useState<string | null>(null);
 
   // Selected vehicle for fitment engine
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>({
@@ -130,6 +203,55 @@ export function App() {
     };
   }, []);
 
+  // Synchronize browser URL (/admin, etc.) with view state
+  useEffect(() => {
+    const checkRoute = () => {
+      const path = window.location.pathname.toLowerCase().replace(/\/$/, '');
+      const hash = window.location.hash.toLowerCase();
+      const isAdminAuthed = sessionStorage.getItem('autoparts_admin_authenticated') === 'true';
+
+      if (path === '/admin' || hash === '#/admin' || hash === '#admin') {
+        if (isAdminAuthed) {
+          setView('admin');
+        } else {
+          setView('admin-login');
+        }
+      } else if (path === '/admin/login' || hash === '#/admin/login') {
+        setView('admin-login');
+      }
+    };
+
+    checkRoute();
+    window.addEventListener('popstate', checkRoute);
+    window.addEventListener('hashchange', checkRoute);
+    return () => {
+      window.removeEventListener('popstate', checkRoute);
+      window.removeEventListener('hashchange', checkRoute);
+    };
+  }, []);
+
+  // Safe navigation with logout warning if in admin view
+  const safeNavigate = (newView: typeof view) => {
+    if (view === 'admin' && newView !== 'admin') {
+      setPendingNavView(newView);
+      setShowAdminLogoutConfirm(true);
+      return;
+    }
+    handleNavigateView(newView);
+  };
+
+  // Update browser URL when view changes to/from admin
+  const handleNavigateView = (newView: typeof view) => {
+    setView(newView);
+    if (newView === 'admin') {
+      window.history.pushState({}, '', '/admin');
+    } else if (newView === 'admin-login') {
+      window.history.pushState({}, '', '/admin');
+    } else if (window.location.pathname.toLowerCase().startsWith('/admin')) {
+      window.history.pushState({}, '', '/');
+    }
+  };
+
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#EEEEEE' }}>
 
@@ -171,7 +293,7 @@ export function App() {
 
           <div
             style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', userSelect: 'none' }}
-            onClick={() => setView('store')}
+            onClick={() => safeNavigate('store')}
           >
             {/* Brand Logo Image from /favicon.png */}
             <img
@@ -921,8 +1043,19 @@ export function App() {
         <main style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', padding: '40px 24px', flex: 1 }}>
           <AccountPage lang={lang} onLogout={() => setView('store')} />
         </main>
+      ) : view === 'admin-login' || (view === 'admin' && !isAdminLoggedIn) ? (
+        <main style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', padding: '20px 16px', flex: 1 }}>
+          <AdminLoginPage
+            lang={lang}
+            onSuccess={() => {
+              setIsAdminLoggedIn(true);
+              handleNavigateView('admin');
+            }}
+            onNavigateHome={() => handleNavigateView('store')}
+          />
+        </main>
       ) : view === 'admin' ? (
-        <main style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', padding: '40px 24px', flex: 1 }}>
+        <main style={{ width: '100%', flex: 1, backgroundColor: '#F8F9FA' }}>
           <AdminDashboard
             parts={parts}
             orders={orders}
@@ -932,8 +1065,14 @@ export function App() {
             brands={[]}
             qualityGrades={[]}
             onAddPart={(p) => setParts(prev => [p, ...prev])}
+            onUpdatePart={(p) => setParts(prev => prev.map(item => item.id === p.id ? p : item))}
+            onDeletePart={(id) => setParts(prev => prev.filter(item => item.id !== id))}
             onUpdateOrderStatus={(id, st) => setOrders(prev => prev.map(o => o.id === id ? { ...o, deliveryStatus: st } : o))}
             onRefreshAllData={() => { }}
+            onLogout={() => {
+              setShowAdminLogoutConfirm(true);
+              setPendingNavView('admin-login');
+            }}
             lang={lang}
           />
         </main>
@@ -1370,22 +1509,113 @@ export function App() {
           </section>
 
           {/* =========================================================================
-              5. FEATURED CATEGORIES
+              5. FEATURED CATEGORIES / PROMOTIONS
               ========================================================================= */}
           <section style={{ maxWidth: '1200px', margin: '0 auto 40px auto', padding: '0 24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '20px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#1A1A1A', margin: 0 }}>
-                FEATURED CATEGORIES
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sparkles size={20} color="#D97706" />
+                <h2 style={{ fontSize: '20px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#1A1A1A', margin: 0 }}>
+                  FEATURED PRODUCTS & CATEGORIES
+                </h2>
+              </div>
+              <span style={{ fontSize: '12px', color: '#888888', fontWeight: 600 }}>
+                Handpicked performance & OEM parts
+              </span>
             </div>
-            <div style={{
-              backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #E0E0E0',
-              padding: '48px 24px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
-            }}>
-              <Package size={36} color="#CCCCCC" style={{ marginBottom: '12px' }} />
-              <div style={{ fontSize: '15px', fontWeight: 700, color: '#999999', marginBottom: '6px' }}>No Featured Categories Yet</div>
-              <div style={{ fontSize: '13px', color: '#BBBBBB' }}>Featured categories will appear here once added.</div>
-            </div>
+
+            {parts.filter(p => (p as any).isFeatured).length === 0 ? (
+              <div style={{
+                backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #E0E0E0',
+                padding: '48px 24px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+              }}>
+                <Package size={36} color="#CCCCCC" style={{ marginBottom: '12px' }} />
+                <div style={{ fontSize: '15px', fontWeight: 700, color: '#999999', marginBottom: '6px' }}>No Featured Products Yet</div>
+                <div style={{ fontSize: '13px', color: '#BBBBBB' }}>Mark items as "Featured" in the Admin Portal to display them here.</div>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
+                {parts.filter(p => (p as any).isFeatured).map(part => (
+                  <div
+                    key={part.id}
+                    onClick={() => { setSelectedPdpPart(part); setView('product'); window.scrollTo(0, 0); }}
+                    style={{
+                      backgroundColor: '#ffffff',
+                      borderRadius: '12px',
+                      border: '1px solid #E5E7EB',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.boxShadow = '0 10px 24px rgba(0,0,0,0.08)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+                    }}
+                  >
+                    <div style={{ position: 'relative', height: '170px', backgroundColor: '#F8F9FA' }}>
+                      <img
+                        src={part.images?.[0] || 'https://via.placeholder.com/300'}
+                        alt={part.nameEn}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      <span style={{
+                        position: 'absolute',
+                        top: '10px',
+                        left: '10px',
+                        backgroundColor: '#CA8A04',
+                        color: '#ffffff',
+                        fontSize: '10px',
+                        fontWeight: 800,
+                        padding: '3px 8px',
+                        borderRadius: '4px',
+                        textTransform: 'uppercase'
+                      }}>
+                        FEATURED
+                      </span>
+                    </div>
+                    <div style={{ padding: '16px' }}>
+                      <div style={{ fontSize: '11px', color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase' }}>
+                        {part.brand} • {part.category}
+                      </div>
+                      <div style={{ fontSize: '14px', fontWeight: 800, color: '#111827', margin: '4px 0 8px 0', minHeight: '36px', lineHeight: '18px' }}>
+                        {part.nameEn}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #F3F4F6', paddingTop: '10px' }}>
+                        <div>
+                          <div style={{ fontSize: '16px', fontWeight: 900, color: '#E53935' }}>{part.price} SAR</div>
+                          {part.originalPrice && (
+                            <div style={{ fontSize: '11px', color: '#9CA3AF', textDecoration: 'line-through' }}>{part.originalPrice} SAR</div>
+                          )}
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToCart(part);
+                          }}
+                          style={{
+                            backgroundColor: '#E53935',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '6px 12px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
 
           {/* =========================================================================
@@ -1399,15 +1629,106 @@ export function App() {
                   DEALS & CLEARANCE
                 </h2>
               </div>
+              <span style={{ fontSize: '12px', color: '#888888', fontWeight: 600 }}>
+                Limited-time special prices & clearance items
+              </span>
             </div>
-            <div style={{
-              backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #E0E0E0',
-              padding: '48px 24px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
-            }}>
-              <Sparkles size={36} color="#CCCCCC" style={{ marginBottom: '12px' }} />
-              <div style={{ fontSize: '15px', fontWeight: 700, color: '#999999', marginBottom: '6px' }}>No Active Deals Right Now</div>
-              <div style={{ fontSize: '13px', color: '#BBBBBB' }}>Flash deals and clearance offers will be listed here.</div>
-            </div>
+
+            {parts.filter(p => (p as any).isDeal || ((p.originalPrice || 0) > p.price)).length === 0 ? (
+              <div style={{
+                backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #E0E0E0',
+                padding: '48px 24px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+              }}>
+                <Sparkles size={36} color="#CCCCCC" style={{ marginBottom: '12px' }} />
+                <div style={{ fontSize: '15px', fontWeight: 700, color: '#999999', marginBottom: '6px' }}>No Active Deals Right Now</div>
+                <div style={{ fontSize: '13px', color: '#BBBBBB' }}>Create promotional discounts from the Admin Portal to list them here.</div>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
+                {parts.filter(p => (p as any).isDeal || ((p.originalPrice || 0) > p.price)).map(part => {
+                  const discount = part.originalPrice ? Math.round(((part.originalPrice - part.price) / part.originalPrice) * 100) : 15;
+                  return (
+                    <div
+                      key={part.id}
+                      onClick={() => { setSelectedPdpPart(part); setView('product'); window.scrollTo(0, 0); }}
+                      style={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: '12px',
+                        border: '1px solid #FECACA',
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s, box-shadow 0.2s',
+                        boxShadow: '0 2px 8px rgba(229,57,53,0.06)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.boxShadow = '0 10px 24px rgba(229,57,53,0.12)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(229,57,53,0.06)';
+                      }}
+                    >
+                      <div style={{ position: 'relative', height: '170px', backgroundColor: '#F8F9FA' }}>
+                        <img
+                          src={part.images?.[0] || 'https://via.placeholder.com/300'}
+                          alt={part.nameEn}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                        <span style={{
+                          position: 'absolute',
+                          top: '10px',
+                          left: '10px',
+                          backgroundColor: '#E53935',
+                          color: '#ffffff',
+                          fontSize: '10px',
+                          fontWeight: 800,
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          textTransform: 'uppercase'
+                        }}>
+                          {(part as any).dealBadge || `${discount}% OFF`}
+                        </span>
+                      </div>
+                      <div style={{ padding: '16px' }}>
+                        <div style={{ fontSize: '11px', color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase' }}>
+                          {part.brand} • {part.category}
+                        </div>
+                        <div style={{ fontSize: '14px', fontWeight: 800, color: '#111827', margin: '4px 0 8px 0', minHeight: '36px', lineHeight: '18px' }}>
+                          {part.nameEn}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #F3F4F6', paddingTop: '10px' }}>
+                          <div>
+                            <div style={{ fontSize: '16px', fontWeight: 900, color: '#E53935' }}>{part.price} SAR</div>
+                            {part.originalPrice && (
+                              <div style={{ fontSize: '11px', color: '#9CA3AF', textDecoration: 'line-through' }}>{part.originalPrice} SAR</div>
+                            )}
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddToCart(part);
+                            }}
+                            style={{
+                              backgroundColor: '#E53935',
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: '6px',
+                              padding: '6px 12px',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Claim Deal
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
           {/* =========================================================================
@@ -2050,6 +2371,104 @@ export function App() {
           >
             <X size={14} />
           </button>
+        </div>
+      )}
+
+      {/* Admin Logout Confirmation Warning Modal */}
+      {showAdminLogoutConfirm && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '440px',
+            padding: '28px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            border: '1px solid #E5E7EB',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: '54px',
+              height: '54px',
+              borderRadius: '50%',
+              backgroundColor: '#FEE2E2',
+              color: '#DC2626',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '16px'
+            }}>
+              <LogOut size={26} />
+            </div>
+
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#111827', margin: '0 0 8px 0' }}>
+              {lang === 'ar' ? 'هل أنت متأكد من تسجيل الخروج؟' : 'Leaving Admin Portal?'}
+            </h3>
+
+            <p style={{ fontSize: '13px', color: '#6B7280', margin: '0 0 24px 0', lineHeight: '20px' }}>
+              {lang === 'ar'
+                ? 'أنت على وشك مغادرة لوحة التحكم الإدارية والعودة إلى واجهة المتجر. سيتم إنهاء جلستك الإدارية النشطة.'
+                : 'You are currently logged into the Admin Portal. Navigating back to the store will exit your active administration session.'}
+            </p>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  setShowAdminLogoutConfirm(false);
+                  setPendingNavView(null);
+                }}
+                style={{
+                  flex: 1,
+                  height: '42px',
+                  backgroundColor: '#F3F4F6',
+                  color: '#374151',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'background-color 0.15s'
+                }}
+              >
+                {lang === 'ar' ? 'البقاء في لوحة التحكم' : 'Stay in Admin'}
+              </button>
+
+              <button
+                onClick={() => {
+                  sessionStorage.removeItem('autoparts_admin_authenticated');
+                  setIsAdminLoggedIn(false);
+                  setShowAdminLogoutConfirm(false);
+                  const dest = pendingNavView || 'store';
+                  setPendingNavView(null);
+                  handleNavigateView(dest as any);
+                }}
+                style={{
+                  flex: 1,
+                  height: '42px',
+                  backgroundColor: '#E53935',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  transition: 'background-color 0.15s'
+                }}
+              >
+                {lang === 'ar' ? 'تأكيد الخروج' : 'Log Out & Leave'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
