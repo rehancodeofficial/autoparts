@@ -23,119 +23,113 @@ export const PartCard: React.FC<PartCardProps> = ({
 
   return (
     <div
-      className="shop-card"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
         display: 'flex',
         flexDirection: 'column',
         padding: '0',
-        position: 'relative'
+        position: 'relative',
+        backgroundColor: '#ffffff',
+        borderRadius: '8px',
+        border: '1px solid #e0e0e0',
+        overflow: 'hidden',
+        boxShadow: isHovered ? '0 4px 16px rgba(0,0,0,0.1)' : '0 1px 4px rgba(0,0,0,0.04)',
+        transition: 'all 0.2s ease'
       }}
     >
-      {/* Product Image Area with inner 20px radius */}
+      {/* Product Image Area */}
       <div style={{
         position: 'relative',
-        height: '240px',
-        padding: '12px 12px 0 12px',
-        backgroundColor: '#ffffff'
+        height: '200px',
+        backgroundColor: '#ffffff',
+        padding: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden'
       }}>
+        <img
+          src={part.images[0]}
+          alt={part.nameEn}
+          style={{
+            maxWidth: '100%',
+            maxHeight: '100%',
+            objectFit: 'contain',
+            transition: 'transform 0.3s ease',
+            transform: isHovered ? 'scale(1.05)' : 'scale(1)'
+          }}
+        />
+
+        {/* Red or Orange Badge top-left */}
         <div style={{
-          width: '100%',
-          height: '100%',
-          borderRadius: '20px',
-          overflow: 'hidden',
-          backgroundColor: '#f8fafc',
-          position: 'relative'
+          position: 'absolute',
+          top: '10px',
+          left: lang === 'en' ? '10px' : 'auto',
+          right: lang === 'ar' ? '10px' : 'auto',
+          backgroundColor: '#FF6600',
+          color: '#ffffff',
+          borderRadius: '4px',
+          padding: '2px 8px',
+          fontSize: '11px',
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px'
         }}>
-          <img
-            src={part.images[0]}
-            alt={part.nameEn}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-              transform: isHovered ? 'scale(1.05)' : 'scale(1)'
-            }}
-          />
-
-          {/* Quick Details Floating Icon */}
-          <button
-            onClick={() => onViewDetails(part)}
-            style={{
-              position: 'absolute',
-              top: '12px',
-              right: lang === 'en' ? '12px' : 'auto',
-              left: lang === 'ar' ? '12px' : 'auto',
-              width: '36px',
-              height: '36px',
-              borderRadius: '9999px',
-              backgroundColor: '#ffffff',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: isHovered ? 1 : 0.8,
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <Eye size={16} color="#000000" />
-          </button>
-
-          {/* Stock Tag on Image */}
-          <div style={{
-            position: 'absolute',
-            bottom: '10px',
-            left: lang === 'en' ? '10px' : 'auto',
-            right: lang === 'ar' ? '10px' : 'auto',
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(8px)',
-            borderRadius: '9999px',
-            padding: '4px 10px',
-            fontSize: '11px',
-            fontWeight: '600',
-            color: '#000000',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
-          }}>
-            {part.stock > 10 ? (lang === 'ar' ? 'متوفر' : 'In Stock') : (lang === 'ar' ? `متبقي ${part.stock}` : `${part.stock} left`)}
-          </div>
+          {part.stock < 10 ? (lang === 'ar' ? 'الأكثر طلباً' : 'HOT DEAL') : (lang === 'ar' ? 'جديد' : 'NEW')}
         </div>
+
+        {/* Quick View Eye Icon */}
+        <button
+          onClick={() => onViewDetails(part)}
+          title="Quick View"
+          style={{
+            position: 'absolute',
+            top: '10px',
+            right: lang === 'en' ? '10px' : 'auto',
+            left: lang === 'ar' ? '10px' : 'auto',
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            backgroundColor: '#ffffff',
+            border: '1px solid #e0e0e0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            opacity: isHovered ? 1 : 0,
+            transition: 'opacity 0.2s ease',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+          }}
+        >
+          <Eye size={15} color="#1A1A1A" />
+        </button>
       </div>
 
-      {/* Card Body with Shop typography */}
-      <div style={{ padding: '16px 20px 20px 20px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+      {/* Card Content */}
+      <div style={{ padding: '14px 16px 16px 16px', display: 'flex', flexDirection: 'column', flex: 1, borderTop: '1px solid #f5f5f5' }}>
         
-        {/* Brand & OEM Reference */}
+        {/* Brand & MPN */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-          <span style={{ fontSize: '12px', fontWeight: '500', color: '#787574', letterSpacing: '-0.017em' }}>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             {part.brand}
           </span>
-          <span style={{
-            fontSize: '11px',
-            color: '#787574',
-            backgroundColor: '#f2f4f5',
-            padding: '2px 8px',
-            borderRadius: '9999px',
-            fontWeight: '500'
-          }}>
+          <span style={{ fontSize: '11px', color: '#888888', fontFamily: 'monospace' }}>
             {part.oemNumber}
           </span>
         </div>
 
-        {/* Title */}
+        {/* Product Title */}
         <h3
           onClick={() => onViewDetails(part)}
           style={{
-            fontSize: '15px',
-            fontWeight: '600',
-            letterSpacing: '-0.025em',
-            color: '#000000',
-            lineHeight: '1.3',
-            marginBottom: '8px',
+            fontSize: '13px',
+            lineHeight: '18px',
+            fontWeight: 700,
+            color: '#1A1A1A',
+            marginBottom: '10px',
             cursor: 'pointer',
+            height: '36px',
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
@@ -145,63 +139,70 @@ export const PartCard: React.FC<PartCardProps> = ({
           {lang === 'ar' ? part.nameAr : part.nameEn}
         </h3>
 
-        {/* Rating row (Shop style 9px caption with tight tracking) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '12px' }}>
-          <div style={{ display: 'flex', gap: '2px' }}>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} size={11} fill="#000000" color="#000000" />
-            ))}
-          </div>
-          <span style={{ fontSize: '11px', color: '#787574', letterSpacing: '-0.02em', marginLeft: '2px' }}>
-            {part.rating} ({part.reviewCount})
-          </span>
+        {/* Fitment Indicator */}
+        <div style={{ marginBottom: '12px' }}>
+          {selectedVehicle && fitmentInfo.fits ? (
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              backgroundColor: '#e6f9ed',
+              color: '#0d8239',
+              borderRadius: '4px',
+              padding: '3px 8px',
+              fontSize: '11px',
+              fontWeight: 700
+            }}>
+              <CheckCircle2 size={13} />
+              <span>{lang === 'ar' ? `متوافق مع ${selectedVehicle.model}` : `Verified Fit: ${selectedVehicle.model}`}</span>
+            </span>
+          ) : (
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              backgroundColor: '#f5f5f5',
+              color: '#666666',
+              borderRadius: '4px',
+              padding: '3px 8px',
+              fontSize: '11px',
+              fontWeight: 600
+            }}>
+              <CheckCircle2 size={12} color="#0d8239" />
+              <span>{lang === 'ar' ? 'مطابقة برقم الهيكل متاحة' : 'OEM Direct Replacement'}</span>
+            </span>
+          )}
         </div>
 
-        {/* Fitment Status Pill */}
-        {selectedVehicle && (
-          <div style={{ marginBottom: '14px' }}>
-            {fitmentInfo.fits ? (
-              <span className="pill-fit">
-                <CheckCircle2 size={13} />
-                <span>{lang === 'ar' ? `يناسب ${selectedVehicle.model}` : `Fits ${selectedVehicle.year} ${selectedVehicle.model}`}</span>
-              </span>
-            ) : (
-              <span className="pill-unfit">
-                <AlertCircle size={13} />
-                <span>{lang === 'ar' ? `لا يناسب ${selectedVehicle.model}` : `Does not fit ${selectedVehicle.model}`}</span>
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Price & Action Row */}
-        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px' }}>
+        {/* Price & Add to Cart button */}
+        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid #f0f0f0' }}>
           <div>
-            <div style={{ fontSize: '18px', fontWeight: '700', letterSpacing: '-0.04em', color: '#000000' }}>
-              {part.price.toFixed(2)} <span style={{ fontSize: '13px', fontWeight: '500', color: '#787574' }}>SAR</span>
+            <div style={{ fontSize: '11px', color: '#888888' }}>{lang === 'ar' ? 'السعر' : 'Price'}</div>
+            <div style={{ fontSize: '15px', fontWeight: 800, color: '#1A1A1A' }}>
+              SAR {part.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            {part.originalPrice && (
-              <div style={{ fontSize: '12px', color: '#787574', textDecoration: 'line-through' }}>
-                {part.originalPrice.toFixed(2)} SAR
-              </div>
-            )}
           </div>
 
           <button
             onClick={() => onAddToCart(part)}
-            className="btn-shop-pill"
             style={{
-              padding: '8px 16px',
-              borderRadius: '9999px',
-              fontSize: '13px',
-              backgroundColor: '#000000',
+              backgroundColor: '#111111',
               color: '#ffffff',
               border: 'none',
-              boxShadow: 'none'
+              borderRadius: '4px',
+              padding: '8px 14px',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'background-color 0.2s ease'
             }}
+            className="hover:bg-red-600"
           >
             <ShoppingBag size={14} />
-            <span>{lang === 'ar' ? 'أضف' : 'Add'}</span>
+            <span>{lang === 'ar' ? 'أضف' : '+ ADD'}</span>
           </button>
         </div>
 

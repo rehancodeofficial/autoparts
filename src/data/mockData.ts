@@ -1,334 +1,469 @@
 import { Part } from '../types';
 
 export const POPULAR_VEHICLES = [
-  { make: 'Toyota', models: ['Camry', 'Land Cruiser', 'Hilux', 'Corolla', 'Yaris', 'RAV4', 'Prado'] },
-  { make: 'Nissan', models: ['Patrol', 'Altima', 'Sunny', 'X-Trail', 'Maxima', 'Navara'] },
-  { make: 'Hyundai', models: ['Elantra', 'Sonata', 'Tucson', 'Accent', 'Santa Fe'] },
-  { make: 'Ford', models: ['F-150', 'Taurus', 'Explorer', 'Expedition', 'Mustang'] },
-  { make: 'GMC', models: ['Yukon', 'Sierra', 'Terrain', 'Acadia'] },
-  { make: 'Lexus', models: ['LX570', 'LX600', 'ES350', 'RX350', 'IS300'] },
-  { make: 'Chevrolet', models: ['Tahoe', 'Suburban', 'Caprice', 'Silverado', 'Malibu'] },
-  { make: 'Mercedes-Benz', models: ['C-Class', 'E-Class', 'S-Class', 'G-Class', 'GLE'] }
+  { make: 'Toyota', models: ['Land Cruiser (LC300)', 'Camry', 'Hilux', 'Corolla', 'Yaris', 'RAV4', 'Prado'] },
+  { make: 'Nissan', models: ['Patrol Y62', 'Altima', 'Sunny', 'X-Trail', 'Maxima', 'Navara'] },
+  { make: 'Ford', models: ['Raptor F-150', 'Taurus', 'Explorer', 'Expedition', 'Mustang'] },
+  { make: 'GMC', models: ['Sierra Denali', 'Yukon', 'Terrain', 'Acadia'] },
+  { make: 'Lexus', models: ['LX600 / LX570', 'ES350', 'RX350', 'IS300'] },
+  { make: 'Hyundai', models: ['Sonata', 'Elantra', 'Tucson', 'Santa Fe'] },
+  { make: 'Chevrolet', models: ['Tahoe', 'Suburban', 'Silverado', 'Caprice'] },
+  { make: 'Mercedes-Benz', models: ['G63 AMG', 'C-Class', 'E-Class', 'S-Class'] }
 ];
 
 export const YEARS = Array.from({ length: 25 }, (_, i) => 2026 - i);
 
 export const SAMPLE_PARTS: Part[] = [
   {
-    id: 'part-01',
-    sku: 'BRK-TOY-04465',
-    oemNumber: '04465-33471',
-    alternateNumbers: ['04465-33450', '04465-06100', '0446533471', 'D1212-8332'],
-    nameEn: 'Ceramic Front Brake Pads Set',
-    nameAr: 'طقم أقمشة فرامل سيراميك أمامية',
-    category: 'Brakes',
-    brand: 'Toyota Genuine Parts / Advics',
+    id: 'speed-01',
+    sku: 'BRK-BREM-GT6',
+    oemNumber: '1N1.9008A',
+    alternateNumbers: ['BREM-GT6-RED', 'B380-34'],
+    nameEn: 'Brembo GT-R 6-Piston Big Brake Kit',
+    nameAr: 'طقم فرامل بريمبو جي تي-آر 6 مكابس عالي الأداء',
+    category: 'Braking Systems',
+    categorySlug: 'brakes',
+    brand: 'Brembo Racing',
     condition: 'Genuine Original',
-    price: 285.00,
-    originalPrice: 340.00,
-    stock: 18,
-    warehouseLocation: 'Riyadh Central (Bin A-14)',
-    rating: 4.9,
-    reviewCount: 42,
+    price: 4090.00,
+    originalPrice: 4600.00,
+    stock: 6,
+    warehouseLocation: 'Riyadh Central Hub',
+    rating: 5.0,
+    reviewCount: 38,
+    qualityGrade: 'GRADE_A',
     images: [
-      'https://images.unsplash.com/photo-1600705723145-6684826f74a0?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80'
+      'https://images.unsplash.com/photo-1600790142055-619df03207e6?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1600705723145-6684826f74a0?auto=format&fit=crop&w=800&q=80'
     ],
-    descriptionEn: 'High-performance OEM genuine ceramic front brake pads. Low dust formulation with anti-squeal shims and hardware included. Engineered specifically for high heat resistance during GCC summer driving.',
-    descriptionAr: 'أقمشة فرامل أمامية سيراميك أصلية عالية الأداء. تركيبة منخفضة الغبار مع صفائح مانعة للاهتزاز والصرير. مصممة لتحمل درجات الحرارة العالية لظروف القيادة الصيفية في الخليج.',
+    descriptionEn: 'Engineered for extreme track and dunes heat rejection. Monobloc radial 6-piston caliper with two-piece slotted floating discs and endurance carbon pads.',
+    descriptionAr: 'مصمم لتحمل أعلى درجات حرارة الحلبات والرمال مع أقراص عائمة مهواة وفحمات كربونية عالية الاستجابة.',
     specifications: {
-      'Position': 'Front Axle (Left & Right)',
-      'Material': 'Ceramic formulation',
-      'Wear Warning': 'Acoustic wear sensors included',
-      'Certification': 'ISO 9001 / SASO Standard'
+      'Caliper': '6-Piston Forged Monobloc Radial',
+      'Rotor Size': '380x34mm 2-Piece Floating Slotted',
+      'Piston Finish': 'Stainless Steel Thermal Insert'
     },
     fitments: [
-      { make: 'Toyota', model: 'Camry', years: [2018, 2019, 2020, 2021, 2022, 2023, 2024], notes: 'Fits 2.5L 4-Cyl and Hybrid models' },
-      { make: 'Toyota', model: 'Avalon', years: [2019, 2020, 2021, 2022], notes: 'All trims' },
-      { make: 'Lexus', model: 'ES350', years: [2019, 2020, 2021, 2022, 2023], notes: 'F-Sport & Executive' }
+      { make: 'Toyota', model: 'Land Cruiser (LC300)', years: [2021, 2022, 2023, 2024, 2025, 2026] },
+      { make: 'Nissan', model: 'Patrol Y62', years: [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025] },
+      { make: 'Lexus', model: 'LX600 / LX570', years: [2020, 2021, 2022, 2023, 2024, 2025] }
     ],
-    warranty: '12 Months / 20,000 KM Warranty',
-    deliveryDays: 'Same-day delivery in Riyadh; 24-48h all KSA'
+    warranty: '24 Months / 40,000 KM Warranty',
+    deliveryDays: 'Same-day delivery in Riyadh; 24-48h KSA'
   },
   {
-    id: 'part-02',
-    sku: 'FLT-TOY-04152',
-    oemNumber: '04152-YZZA1',
-    alternateNumbers: ['04152YZZA1', '04152-31090', 'HU-7019Z'],
-    nameEn: 'Genuine Engine Oil Filter with O-Ring',
-    nameAr: 'فلتر زيت محرك أصلي مع الحلقات المطاطية',
-    category: 'Filters',
+    id: 'speed-02',
+    sku: 'EXH-HKS-SS',
+    oemNumber: '31019-AT015',
+    alternateNumbers: ['HKS-EXH-LC300', 'TI-DUAL-90'],
+    nameEn: 'HKS Hi-Power Stainless Steel Dual Exhaust System',
+    nameAr: 'شكمان ونظام عادم رياضي HKS ستانلس ستيل مزدوج',
+    category: 'Engine Components',
+    categorySlug: 'engine-parts',
+    brand: 'HKS Racing',
+    condition: 'Genuine Original',
+    price: 3850.00,
+    originalPrice: 4200.00,
+    stock: 4,
+    warehouseLocation: 'Jeddah Coastal Hub',
+    rating: 4.9,
+    reviewCount: 24,
+    qualityGrade: 'GRADE_A',
+    images: [
+      'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=800&q=80'
+    ],
+    descriptionEn: 'SUS304 mandrel-bent stainless steel cat-back exhaust with burnt titanium tips. Significant flow increases with refined aggressive exhaust note.',
+    descriptionAr: 'نظام عادم ستانلس ستيل 304 رياضي كامل مع مخارج تيتانيوم محروقة لتحسين عزم المحرك وصوت نقي.',
+    specifications: {
+      'Material': 'SUS304 Stainless Steel + Titanium Tips',
+      'Pipe Diameter': '76mm to Dual 60mm',
+      'Sound Level': '89dB Street Legal'
+    },
+    fitments: [
+      { make: 'Toyota', model: 'Land Cruiser (LC300)', years: [2022, 2023, 2024, 2025, 2026] },
+      { make: 'Ford', model: 'Raptor F-150', years: [2021, 2022, 2023, 2024] }
+    ],
+    warranty: '36 Months Manufacturer Warranty',
+    deliveryDays: '24-48h Express Shipping KSA'
+  },
+  {
+    id: 'speed-03',
+    sku: 'OIL-MOTUL-300V',
+    oemNumber: '106154',
+    alternateNumbers: ['MOTUL-15W50-5L', 'EST-CORE-5L'],
+    nameEn: 'Motul 300V Competition 15W-50 Racing Oil (5L)',
+    nameAr: 'زيت سباقات موتل 300V كومبتيشن 15W-50 أصلي (5 لتر)',
+    category: 'Engine Oils & Fluids',
+    categorySlug: 'fluids',
+    brand: 'Motul Motorsport',
+    condition: 'Genuine Original',
+    price: 295.00,
+    originalPrice: 340.00,
+    stock: 48,
+    warehouseLocation: 'Riyadh Central Hub',
+    rating: 5.0,
+    reviewCount: 112,
+    qualityGrade: 'GRADE_A',
+    images: [
+      'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=800&q=80'
+    ],
+    descriptionEn: '100% Synthetic Racing 4-stroke lubricant based on ESTER Core technology. Guarantees maximum oil pressure under intense desert and track conditions.',
+    descriptionAr: 'زيت تخليقي 100% مخصص لأعلى درجات حرارة المحركات التوربينية والسباقات في ظروف الخليج القاسية.',
+    specifications: {
+      'Viscosity': '15W-50',
+      'Technology': 'ESTER Core Synthetic Formula',
+      'Volume': '5 Liters Metal Canister'
+    },
+    fitments: [
+      { make: 'Toyota', model: 'Land Cruiser (LC300)', years: [2021, 2022, 2023, 2024, 2025, 2026] },
+      { make: 'Nissan', model: 'Patrol Y62', years: [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025] },
+      { make: 'Ford', model: 'Raptor F-150', years: [2020, 2021, 2022, 2023, 2024] }
+    ],
+    warranty: '100% Authentic Factory Sealed',
+    deliveryDays: 'Same-day Riyadh, Next day KSA'
+  },
+  {
+    id: 'speed-04',
+    sku: 'SPK-NGK-IRID',
+    oemNumber: 'LFR6AIX-11',
+    alternateNumbers: ['6619-SET8', 'SILFR6A'],
+    nameEn: 'NGK Laser Iridium Spark Plug Unit Set (x8)',
+    nameAr: 'طقم بواجي ليزر إيريديوم إن جي كي رياضية (8 حبات)',
+    category: 'Ignition Plugs & Coils',
+    categorySlug: 'ignition',
+    brand: 'NGK Spark Plugs',
+    condition: 'Genuine Original',
+    price: 310.00,
+    originalPrice: 380.00,
+    stock: 35,
+    warehouseLocation: 'Riyadh Central Hub',
+    rating: 4.9,
+    reviewCount: 65,
+    qualityGrade: 'GRADE_A',
+    images: [
+      'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?auto=format&fit=crop&w=800&q=80'
+    ],
+    descriptionEn: 'Laser-welded iridium center electrode tip ensures high durability and greater spark intensity for smooth idle and maximum acceleration.',
+    descriptionAr: 'بواجي ليزر إيريديوم يابانية تضمن اشتعال مثالي وتوفير في استهلاك الوقود واستجابة سريعة للخانق.',
+    specifications: {
+      'Electrode': '0.6mm Laser Iridium Tip',
+      'Quantity': 'Complete Set of 8 Plugs',
+      'Heat Range': '6 Cold Performance'
+    },
+    fitments: [
+      { make: 'Toyota', model: 'Land Cruiser (LC300)', years: [2021, 2022, 2023, 2024, 2025, 2026] },
+      { make: 'Nissan', model: 'Patrol Y62', years: [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025] }
+    ],
+    warranty: '100,000 KM Mileage Benchmark',
+    deliveryDays: 'Express Dispatch'
+  },
+  {
+    id: 'speed-05',
+    sku: 'WHL-VOLK-TE37',
+    oemNumber: 'TE37-ULTRA-20',
+    alternateNumbers: ['RAYS-TE37-BRZ', '20X10-ET15'],
+    nameEn: 'TE37 Ultra Large P.C.D. 20" Forged Bronze Wheel',
+    nameAr: 'جنط رياضي فورجد أصلي TE37 ألترا مقاس 20 برونزي',
+    category: 'Alloy Wheels & Tires',
+    categorySlug: 'wheels',
+    brand: 'Rays Volk Racing',
+    condition: 'Genuine Original',
+    price: 3140.00,
+    originalPrice: 3500.00,
+    stock: 8,
+    warehouseLocation: 'Riyadh Central Hub',
+    rating: 5.0,
+    reviewCount: 19,
+    qualityGrade: 'GRADE_A',
+    images: [
+      'https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=800&q=80'
+    ],
+    descriptionEn: 'Mold-form forged 1-piece wheel engineered specifically for full-size SUVs. Exceptional strength-to-weight ratio to reduce unsprung mass.',
+    descriptionAr: 'جنط فورجد قطعة واحدة عالي الصلابة وخفيف الوزن مصمم خصيصاً لسيارات الدفع الرباعي الكبيرة.',
+    specifications: {
+      'Size': '20 x 9.5J',
+      'PCD': '6x139.7',
+      'Offset': '+15mm',
+      'Finish': 'Bronze Almite'
+    },
+    fitments: [
+      { make: 'Toyota', model: 'Land Cruiser (LC300)', years: [2021, 2022, 2023, 2024, 2025, 2026] },
+      { make: 'Nissan', model: 'Patrol Y62', years: [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025] }
+    ],
+    warranty: 'Lifetime Structural Warranty',
+    deliveryDays: '48h Secured Freight'
+  },
+  {
+    id: 'speed-06',
+    sku: 'WHL-METH-314',
+    oemNumber: 'MR31489060512',
+    alternateNumbers: ['METHOD-314-BLK'],
+    nameEn: 'Method Matte Black 17x8.5 MR314 Desert Wheel',
+    nameAr: 'جنط ميثود أسود مطفي 17 إنش مخصص للصحراء',
+    category: 'Alloy Wheels & Tires',
+    categorySlug: 'wheels',
+    brand: 'Method Race Wheels',
+    condition: 'Genuine Original',
+    price: 1150.00,
+    originalPrice: 1300.00,
+    stock: 16,
+    warehouseLocation: 'Riyadh Central Hub',
+    rating: 4.8,
+    reviewCount: 31,
+    qualityGrade: 'GRADE_A',
+    images: [
+      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80'
+    ],
+    descriptionEn: 'Solid A356 aluminum with T6 heat treatment. Patented Bead Grip technology engages tire bead for increased grip at ultra-low tire pressures.',
+    descriptionAr: 'تقنية بيد جريب تمنع انزلاق الإطار عند التنسيم في الرمال.',
+    specifications: { 'Size': '17x8.5', 'Bolt Pattern': '6x139.7' },
+    fitments: [
+      { make: 'Toyota', model: 'Land Cruiser (LC300)', years: [2021, 2022, 2023, 2024, 2025, 2026] }
+    ],
+    warranty: 'Limited Lifetime Structural',
+    deliveryDays: 'Immediate Dispatch'
+  },
+  {
+    id: 'speed-07',
+    sku: 'TIR-BFG-KO3',
+    oemNumber: 'BFG-285-60-20',
+    alternateNumbers: ['KO3-ALL-TERRAIN'],
+    nameEn: 'All-Terrain T/A KO3 285/60R20 125/122S Tire',
+    nameAr: 'كفرات بي إف جودريتش أول تيرين KO3 مقاس 20',
+    category: 'Alloy Wheels & Tires',
+    categorySlug: 'wheels',
+    brand: 'BFGoodrich',
+    condition: 'Genuine Original',
+    price: 1320.00,
+    originalPrice: 1450.00,
+    stock: 24,
+    warehouseLocation: 'Riyadh Central Hub',
+    rating: 5.0,
+    reviewCount: 88,
+    qualityGrade: 'GRADE_A',
+    images: [
+      'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=800&q=80'
+    ],
+    descriptionEn: 'The legendary off-road tire with CoreGard Technology, engineered to resist split sidewalls and withstand extreme rock crawling and desert temperatures.',
+    descriptionAr: 'أقوى إطار لجميع التضاريس مع حماية متطورة للجوانب من التمزق.',
+    specifications: { 'Size': '285/60R20', 'Ply Rating': '10-Ply E' },
+    fitments: [
+      { make: 'Toyota', model: 'Land Cruiser (LC300)', years: [2021, 2022, 2023, 2024, 2025, 2026] }
+    ],
+    warranty: '50,000 KM Mileage Warranty',
+    deliveryDays: 'Same-day Riyadh'
+  },
+  {
+    id: 'speed-08',
+    sku: 'TIR-MIC-PILOT',
+    oemNumber: 'MIC-275-50-22',
+    alternateNumbers: ['PS4-SUV-111Y'],
+    nameEn: 'Pilot Sport 4S (275/50R22) Ultra Highway Tire',
+    nameAr: 'كفرات ميشلان بايلوت سبورت 4S مقاس 22 سرعات عالية',
+    category: 'Alloy Wheels & Tires',
+    categorySlug: 'wheels',
+    brand: 'Michelin',
+    condition: 'Genuine Original',
+    price: 1650.00,
+    originalPrice: 1850.00,
+    stock: 12,
+    warehouseLocation: 'Riyadh Central Hub',
+    rating: 4.9,
+    reviewCount: 44,
+    qualityGrade: 'GRADE_A',
+    images: [
+      'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80'
+    ],
+    descriptionEn: 'Exceptional dry and wet grip. Dynamic Response technology adapts to road conditions for razor-sharp steering accuracy on high-speed motorways.',
+    descriptionAr: 'ثبات فائق على المنعطفات وهدوء تام داخل المقصورة على الطرق السريعة.',
+    specifications: { 'Size': '275/50R22', 'Speed Index': 'Y (300 km/h)' },
+    fitments: [
+      { make: 'Lexus', model: 'LX600 / LX570', years: [2021, 2022, 2023, 2024, 2025] }
+    ],
+    warranty: '5-Year Michelin Guarantee',
+    deliveryDays: 'Same-day Riyadh'
+  },
+  {
+    id: 'speed-09',
+    sku: 'WHL-ADVAN-GT',
+    oemNumber: 'ADVAN-GT-BEYOND',
+    alternateNumbers: ['YOKO-GTB-21'],
+    nameEn: 'Advan GT Beyond 21" Forged Hyper Black',
+    nameAr: 'جنط يوكوهاما أدفان جي تي بيوند 21 إنش فورجد',
+    category: 'Alloy Wheels & Tires',
+    categorySlug: 'wheels',
+    brand: 'Yokohama Advan',
+    condition: 'Genuine Original',
+    price: 3600.00,
+    originalPrice: 3950.00,
+    stock: 4,
+    warehouseLocation: 'Riyadh Central Hub',
+    rating: 5.0,
+    reviewCount: 15,
+    qualityGrade: 'GRADE_A',
+    images: [
+      'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=800&q=80'
+    ],
+    descriptionEn: 'A-6061-T6 forged aerospace alloy rim with concave spoke profile clearing oversized Brembo calipers.',
+    descriptionAr: 'جنط رياضي ألمنيوم طيران فورجد فائق الخفة والجمال.',
+    specifications: { 'Size': '21x10.0J', 'Finish': 'Racing Hyper Black' },
+    fitments: [
+      { make: 'Nissan', model: 'Patrol Y62', years: [2020, 2021, 2022, 2023, 2024] }
+    ],
+    warranty: 'Authenticity Certificate Included',
+    deliveryDays: '24-48h KSA'
+  },
+  {
+    id: 'speed-10',
+    sku: 'FLT-TOY-LC300',
+    oemNumber: '04152-YZZA4',
+    alternateNumbers: ['TOY-OIL-FLT'],
+    nameEn: 'Toyota Genuine Twin-Turbo V6 Oil Filter Kit',
+    nameAr: 'فلتر زيت محرك تويوتا أصلي للاندكروزر توين تيربو',
+    category: 'Routine Service & Filters',
+    categorySlug: 'filters',
     brand: 'Toyota Genuine Parts',
     condition: 'Genuine Original',
     price: 38.00,
     originalPrice: 48.00,
     stock: 120,
-    warehouseLocation: 'Jeddah Coastal Hub (Bin F-02)',
-    rating: 4.95,
-    reviewCount: 156,
-    images: [
-      'https://images.unsplash.com/photo-1635770311742-c519541a7d65?auto=format&fit=crop&w=800&q=80'
-    ],
-    descriptionEn: 'Authentic Toyota oil filter cartridge element with pre-packaged O-ring gasket. High filtering efficiency capturing particles down to 10 microns.',
-    descriptionAr: 'فلتر زيت محرك وكالة تويوتا مع مانع تسرب أصلي. كفاءة تنقية عالية تلتقط الجزيئات الدقيقة حتى 10 ميكرون لحماية المحرك من الرواسب.',
-    specifications: {
-      'Filter Type': 'Cartridge insert',
-      'Height': '67 mm',
-      'Outer Diameter': '70 mm',
-      'Gasket Included': 'Yes (Viton high-temp)'
-    },
-    fitments: [
-      { make: 'Toyota', model: 'Camry', years: [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022], notes: '2.5L Engine' },
-      { make: 'Toyota', model: 'RAV4', years: [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021], notes: 'Gas & Hybrid' },
-      { make: 'Toyota', model: 'Highlander', years: [2014, 2015, 2016, 2017, 2018, 2019, 2020], notes: 'All 3.5L V6 models' }
-    ],
-    warranty: 'Guaranteed Authentic OEM',
-    deliveryDays: 'Same-day Riyadh / 1-2 days Western & Eastern Province'
-  },
-  {
-    id: 'part-03',
-    sku: 'IGN-NGK-90919',
-    oemNumber: '90919-01253',
-    alternateNumbers: ['9091901253', 'SC20HR11', 'ILKAR7B11', '90919-01275'],
-    nameEn: 'Laser Iridium Spark Plugs (Pack of 4)',
-    nameAr: 'طقم بواجي ليزر إيريديوم (4 حبات)',
-    category: 'Engine',
-    brand: 'Denso / NGK Japan',
-    condition: 'Brand New (OEM)',
-    price: 165.00,
-    originalPrice: 210.00,
-    stock: 35,
-    warehouseLocation: 'Dammam Hub (Bin C-09)',
-    rating: 4.88,
-    reviewCount: 38,
-    images: [
-      'https://images.unsplash.com/photo-1588702547923-7093a6c3ba33?auto=format&fit=crop&w=800&q=80'
-    ],
-    descriptionEn: '0.4mm ultra-fine iridium center electrode for optimum ignition performance and fuel efficiency. Lasts up to 100,000 km.',
-    descriptionAr: 'شمعات احتراق إيريديوم ليزر برأس دقيق 0.4 مم لتعزيز كفاءة الاحتراق وتوفير استهلاك الوقود. عمر افتراضي حتى 100,000 كم.',
-    specifications: {
-      'Electrode': 'Iridium 0.4mm',
-      'Thread Size': '14 mm',
-      'Hex Size': '16 mm (5/8 inch)',
-      'Quantity': '4 units per set'
-    },
-    fitments: [
-      { make: 'Toyota', model: 'Corolla', years: [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022], notes: '1.6L and 2.0L Dual VVT-i' },
-      { make: 'Toyota', model: 'Yaris', years: [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023], notes: '1.5L Engine' },
-      { make: 'Toyota', model: 'RAV4', years: [2019, 2020, 2021, 2022, 2023], notes: 'Dynamic Force 2.0L' }
-    ],
-    warranty: '6 Months Replacement Guarantee',
-    deliveryDays: '1–2 Business Days'
-  },
-  {
-    id: 'part-04',
-    sku: 'SUS-NIS-54618',
-    oemNumber: '54618-1AA0E',
-    alternateNumbers: ['546181AA0E', '54618-1AA0A', 'SL-4950'],
-    nameEn: 'Front Stabilizer Sway Bar Link (Pair)',
-    nameAr: 'مسمار توازن أمامي يمين ويسار (طقم حبتين)',
-    category: 'Suspension',
-    brand: '555 Japan Sankei',
-    condition: 'Premium Aftermarket',
-    price: 195.00,
-    originalPrice: 245.00,
-    stock: 14,
-    warehouseLocation: 'Riyadh Central (Bin S-22)',
-    rating: 4.85,
-    reviewCount: 29,
-    images: [
-      'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=800&q=80'
-    ],
-    descriptionEn: 'Heavy duty front sway bar drop links engineered in Japan. Eliminates knocking noises over bumps and restores cornering stability.',
-    descriptionAr: 'مسامير توازن أمامية أصلية صناعة يابانية 555. تقضي على أصوات الطقطقة والمطبات وتعيد ثبات وتوازن المركبة عند المنعطفات.',
-    specifications: {
-      'Origin': 'Made in Japan',
-      'Position': 'Front Left & Right',
-      'Construction': 'Forged alloy steel with dust boots'
-    },
-    fitments: [
-      { make: 'Nissan', model: 'Patrol', years: [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024], notes: 'Y62 V8 & V6 Platforms' },
-      { make: 'Nissan', model: 'Altima', years: [2013, 2014, 2015, 2016, 2017, 2018], notes: 'All 2.5L and 3.5L models' }
-    ],
-    warranty: '12 Months Warranty',
-    deliveryDays: 'Same-day Riyadh / Next day KSA'
-  },
-  {
-    id: 'part-05',
-    sku: 'CLG-RAD-21410',
-    oemNumber: '21410-1EA0A',
-    alternateNumbers: ['214101EA0A', 'DPI-13197', 'Koyo-PL022'],
-    nameEn: 'Aluminum Heavy Duty Engine Radiator',
-    nameAr: 'رديتر ماء محرك ألمنيوم عالي التحمل',
-    category: 'Cooling',
-    brand: 'KoyoRad Japan / Denso',
-    condition: 'Premium Aftermarket',
-    price: 640.00,
-    originalPrice: 790.00,
-    stock: 7,
-    warehouseLocation: 'Riyadh Central (Bin R-04)',
-    rating: 4.92,
-    reviewCount: 19,
-    images: [
-      'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80'
-    ],
-    descriptionEn: 'Dual-core heavy-duty brazed aluminum radiator designed for severe desert climate temperatures. Pressure tested to 2.5 bar.',
-    descriptionAr: 'رديتر ماء من الألمنيوم المقوى مزدوج الخلايا مصمم للظروف الجوية الحارة في الخليج. مفحوص ومختبر ضد الضغط العالي حتى 2.5 بار.',
-    specifications: {
-      'Core Material': 'Brazed Aluminum',
-      'Transmission Oil Cooler': 'Integrated inside lower tank',
-      'Inlet / Outlet': '35 mm'
-    },
-    fitments: [
-      { make: 'Nissan', model: 'Patrol', years: [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021], notes: 'Y62 VK56VD / VK56DE V8' },
-      { make: 'GMC', model: 'Yukon', years: [2015, 2016, 2017, 2018, 2019, 2020], notes: '5.3L EcoTec3 V8' }
-    ],
-    warranty: '24 Months Replacement Warranty',
-    deliveryDays: '1–2 Business Days'
-  },
-  {
-    id: 'part-06',
-    sku: 'ELC-ALT-27060',
-    oemNumber: '27060-0P241',
-    alternateNumbers: ['270600P241', '104210-2100', 'AL-TOY-150A'],
-    nameEn: '150A High Output Alternator Generator',
-    nameAr: 'دينمو كهرباء عالي السعة 150 أمبير أصلي',
-    category: 'Electrical',
-    brand: 'Denso OEM',
-    condition: 'Genuine Original',
-    price: 920.00,
-    originalPrice: 1150.00,
-    stock: 5,
-    warehouseLocation: 'Jeddah Coastal Hub (Bin E-11)',
-    rating: 4.97,
-    reviewCount: 14,
-    images: [
-      'https://images.unsplash.com/photo-1541348263662-e0c8de4259ba?auto=format&fit=crop&w=800&q=80'
-    ],
-    descriptionEn: '150 Amp charging power output with internal regulator and overrunning alternator pulley (OAP) to dampen belt vibration.',
-    descriptionAr: 'دينمو كهرباء بسعة شحن 150 أمبير مع منظم شحن داخلي وبكرة امتصاص اهتزازات السير لضمان ثبات التيار الكهربائي.',
-    specifications: {
-      'Output': '12V, 150 Ampere',
-      'Pulley': '6-Groove Clutch Pulley',
-      'Connector': '4-Pin oval socket'
-    },
-    fitments: [
-      { make: 'Toyota', model: 'Land Cruiser', years: [2016, 2017, 2018, 2019, 2020, 2021], notes: '4.6L and 5.7L V8' },
-      { make: 'Lexus', model: 'LX570', years: [2016, 2017, 2018, 2019, 2020, 2021], notes: '3UR-FE 5.7L V8' }
-    ],
-    warranty: '12 Months Warranty',
-    deliveryDays: 'Fast Courier across KSA'
-  },
-  {
-    id: 'part-07',
-    sku: 'FLT-AIR-17801',
-    oemNumber: '17801-21060',
-    alternateNumbers: ['1780121060', 'WA9748', 'C-24005'],
-    nameEn: 'High Flow Engine Air Filter Element',
-    nameAr: 'فلتر هواء محرك أصلي عالي التدفق',
-    category: 'Filters',
-    brand: 'Toyota Genuine Parts',
-    condition: 'Genuine Original',
-    price: 65.00,
-    originalPrice: 85.00,
-    stock: 60,
-    warehouseLocation: 'Riyadh Central (Bin F-18)',
+    warehouseLocation: 'Riyadh Central Hub',
     rating: 4.9,
-    reviewCount: 67,
-    images: [
-      'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=800&q=80'
-    ],
-    descriptionEn: 'Micron-pleated air filter that traps fine desert sand dust while maximizing intake airflow for best engine torque and mileage.',
-    descriptionAr: 'فلتر هواء وكالة بطيات ميكرونية تعزل ذرات الغبار والرمال مع توفير أعلى تدفق هواء لعزم المحرك وتقليل صرفية البنزين.',
-    specifications: {
-      'Material': 'Synthetic multi-fiber',
-      'Seal': 'Polyurethane tight rim seal'
-    },
-    fitments: [
-      { make: 'Toyota', model: 'Yaris', years: [2014, 2015, 2016, 2017, 2018, 2019, 2020], notes: '1.3L & 1.5L Engines' },
-      { make: 'Toyota', model: 'Corolla', years: [2014, 2015, 2016, 2017, 2018, 2019], notes: '1.6L Petrol' }
-    ],
-    warranty: '100% Genuine Guaranteed',
-    deliveryDays: 'Same-day Riyadh'
-  },
-  {
-    id: 'part-08',
-    sku: 'BRK-HYU-58101',
-    oemNumber: '58101-G3A00',
-    alternateNumbers: ['58101G3A00', 'SP-1848', 'D1912'],
-    nameEn: 'Hi-Q Premium Front Brake Pad Kit',
-    nameAr: 'طقم أقمشة فرامل هاي-كيو كورية أمامية',
-    category: 'Brakes',
-    brand: 'Sangsin Hi-Q Korea',
-    condition: 'Premium Aftermarket',
-    price: 135.00,
-    originalPrice: 170.00,
-    stock: 22,
-    warehouseLocation: 'Dammam Hub (Bin B-05)',
-    rating: 4.82,
-    reviewCount: 51,
+    reviewCount: 240,
+    qualityGrade: 'GRADE_A',
     images: [
       'https://images.unsplash.com/photo-1600705723145-6684826f74a0?auto=format&fit=crop&w=800&q=80'
     ],
-    descriptionEn: 'Korea premier Sangsin Hi-Q brake pads offering smooth braking modulation with zero rotor disc gouging.',
-    descriptionAr: 'فحمات فرامل كورية هاي-كيو درجة أولى توفر توقفاً سلساً وثباتاً عالياً دون تجريح الهوبات.',
-    specifications: {
-      'Manufacturer': 'Sangsin Brake Co. Ltd (Korea)',
-      'Position': 'Front Left & Right'
-    },
+    descriptionEn: 'Factory genuine oil filter element with high-temperature O-rings and crush washer for Land Cruiser 3.5L Twin Turbo.',
+    descriptionAr: 'فلتر الزيت المعتمد من وكالة تويوتا مع الربلات الأصلية لضمان عدم التهريب.',
+    specifications: { 'Engine': '3.5L Twin Turbo V6 (V35A-FTS)' },
     fitments: [
-      { make: 'Hyundai', model: 'Elantra', years: [2016, 2017, 2018, 2019, 2020], notes: '1.6L and 2.0L' },
-      { make: 'Hyundai', model: 'Sonata', years: [2015, 2016, 2017, 2018, 2019], notes: '2.4L Engine' }
+      { make: 'Toyota', model: 'Land Cruiser (LC300)', years: [2021, 2022, 2023, 2024, 2025, 2026] }
     ],
-    warranty: '6 Months Warranty',
-    deliveryDays: '1–2 Business Days'
+    warranty: 'Genuine Toyota Guaranteed',
+    deliveryDays: 'Same-day dispatch'
+  },
+  {
+    id: 'speed-11',
+    sku: 'FLT-AF-HKS',
+    oemNumber: '70017-AT128',
+    alternateNumbers: ['HKS-LC300-FLT'],
+    nameEn: 'High-Flow Hybrid Replacement Engine Air Filter Set',
+    nameAr: 'طقم فلاتر هواء رياضية HKS هاي فلو للمحرك',
+    category: 'Routine Service & Filters',
+    categorySlug: 'filters',
+    brand: 'HKS Super Air Filter',
+    condition: 'Genuine Original',
+    price: 210.00,
+    originalPrice: 260.00,
+    stock: 32,
+    warehouseLocation: 'Riyadh Central Hub',
+    rating: 4.8,
+    reviewCount: 52,
+    qualityGrade: 'GRADE_A',
+    images: [
+      'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=800&q=80'
+    ],
+    descriptionEn: '3-layer dry-type polyurethane filter elements offering reduced intake restriction while preserving optimal dust filtration in desert conditions.',
+    descriptionAr: 'طقم فلاتر هواء رياضية تعطي تدفق هواء أعلى بنسبة 25% مع كفاءة تنقية ممتازة.',
+    specifications: { 'Type': 'Direct Drop-in Replacement (Dual Set)' },
+    fitments: [
+      { make: 'Toyota', model: 'Land Cruiser (LC300)', years: [2021, 2022, 2023, 2024, 2025, 2026] }
+    ],
+    warranty: 'Reusable / Washable',
+    deliveryDays: 'Express Dispatch'
+  },
+  {
+    id: 'speed-12',
+    sku: 'FLT-CAB-DENSO',
+    oemNumber: '87139-58010',
+    alternateNumbers: ['DCC-1014'],
+    nameEn: 'Anti-Bacterial Active Carbon Cabin AC Filter',
+    nameAr: 'فلتر مكيف دينسو ياباني كربون نشط ومضاد للبكتيريا',
+    category: 'Routine Service & Filters',
+    categorySlug: 'filters',
+    brand: 'Denso Japan',
+    condition: 'Genuine Original',
+    price: 85.00,
+    originalPrice: 110.00,
+    stock: 55,
+    warehouseLocation: 'Riyadh Central Hub',
+    rating: 4.9,
+    reviewCount: 78,
+    qualityGrade: 'GRADE_A',
+    images: [
+      'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?auto=format&fit=crop&w=800&q=80'
+    ],
+    descriptionEn: 'Triple-layer electrostatically charged active carbon filter neutralizes sand particles, dust storms, and odors inside the vehicle cabin.',
+    descriptionAr: 'فلتر مكيف بتقنية الكربون النشط ينقي الهواء الداخلي من الغبار والروائح تماماً.',
+    specifications: { 'Filtration Efficiency': 'PM2.5 Sand & Pollen Microparticles' },
+    fitments: [
+      { make: 'Toyota', model: 'Land Cruiser (LC300)', years: [2021, 2022, 2023, 2024, 2025, 2026] }
+    ],
+    warranty: 'OEM Quality Certified',
+    deliveryDays: 'Same-day Riyadh'
+  },
+  {
+    id: 'speed-13',
+    sku: 'OIL-CAST-5W40',
+    oemNumber: 'CAST-EDGE-5L',
+    alternateNumbers: ['EDGE-TITANIUM-5W40'],
+    nameEn: 'Castrol Edge 5W-40 Advanced Full Synthetic (4L)',
+    nameAr: 'زيت كاسترول إيدج 5W-40 تخليقي بالكامل مع تيتانيوم (4 لتر)',
+    category: 'Routine Service & Filters',
+    categorySlug: 'fluids',
+    brand: 'Castrol Edge',
+    condition: 'Genuine Original',
+    price: 152.00,
+    originalPrice: 180.00,
+    stock: 60,
+    warehouseLocation: 'Riyadh Central Hub',
+    rating: 4.9,
+    reviewCount: 94,
+    qualityGrade: 'GRADE_A',
+    images: [
+      'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=800&q=80'
+    ],
+    descriptionEn: 'Boosted with Fluid TITANIUM technology to transform under extreme engine pressure and reduce performance-robbing friction.',
+    descriptionAr: 'زيت كاسترول تيتانيوم يحافظ على أداء وثبات لزوجة المحرك في أعلى درجات الحرارة.',
+    specifications: { 'Grade': 'API SP / SN Plus, ACEA A3/B4' },
+    fitments: [
+      { make: 'Toyota', model: 'Land Cruiser (LC300)', years: [2021, 2022, 2023, 2024, 2025, 2026] }
+    ],
+    warranty: 'Factory Sealed Batch',
+    deliveryDays: 'Same-day delivery'
+  },
+  {
+    id: 'speed-14',
+    sku: 'CLN-TOY-LLC',
+    oemNumber: '08889-80072',
+    alternateNumbers: ['TOY-SUPER-LLC-4L'],
+    nameEn: 'Toyota Super Long Life Pre-Mixed Pink Coolant (4L)',
+    nameAr: 'ماء راديتر تويوتا سوبر طويل الأمد الوردي أصلي (4 لتر)',
+    category: 'Routine Service & Filters',
+    categorySlug: 'fluids',
+    brand: 'Toyota Genuine Parts',
+    condition: 'Genuine Original',
+    price: 112.00,
+    originalPrice: 135.00,
+    stock: 45,
+    warehouseLocation: 'Riyadh Central Hub',
+    rating: 5.0,
+    reviewCount: 160,
+    qualityGrade: 'GRADE_A',
+    images: [
+      'https://images.unsplash.com/photo-1600790142055-619df03207e6?auto=format&fit=crop&w=800&q=80'
+    ],
+    descriptionEn: 'Ethylene glycol base formula pre-diluted 50/50 with deionized water. Prevents corrosion and boil-over up to 132°C under Saudi summer driving.',
+    descriptionAr: 'ماء تبريد محرك أصلي جاهز للاستخدام يمنع الصدأ وغليان الراديتر حتى 132 درجة مئوية.',
+    specifications: { 'Color': 'Pink 50/50 Pre-Diluted', 'Volume': '4 Liters' },
+    fitments: [
+      { make: 'Toyota', model: 'Land Cruiser (LC300)', years: [2021, 2022, 2023, 2024, 2025, 2026] }
+    ],
+    warranty: 'Genuine Toyota Guaranteed',
+    deliveryDays: 'Same-day Riyadh'
   }
 ];
 
-export const INITIAL_ORDERS: import('../types').Order[] = [
-  {
-    id: 'ord-9021',
-    orderNumber: 'KSA-98241',
-    date: '2026-10-13 14:22',
-    customerName: 'Sultan Al-Otaibi',
-    customerPhone: '+966 50 123 4567',
-    city: 'Riyadh',
-    address: 'Al Malqa Dist, Anas Ibn Malik Rd, Bldg 42',
-    items: [
-      { part: SAMPLE_PARTS[0], quantity: 1 },
-      { part: SAMPLE_PARTS[1], quantity: 2 }
-    ],
-    subtotal: 361.00,
-    vat: 54.15,
-    shipping: 25.00,
-    total: 440.15,
-    paymentMethod: 'apple_pay',
-    paymentStatus: 'Paid',
-    deliveryStatus: 'Packed',
-    trackingNumber: 'SMSA-882941029',
-    carrier: 'SMSA Express',
-    zatcaQrString: 'AQZTYXVkaSBBdXRvUGFydHMDFDEwMTIzNDU2NzgwMDAwMwMTMjAyNi0xMC0xM1QxNDoyMjowMFoEBjQ0MC4xNQEFNTQuMTU='
-  },
-  {
-    id: 'ord-9022',
-    orderNumber: 'KSA-98242',
-    date: '2026-10-13 16:05',
-    customerName: 'Fahad Al-Harbi',
-    customerPhone: '+966 55 987 6543',
-    city: 'Jeddah',
-    address: 'Al Rawdah District, Prince Sultan St',
-    items: [
-      { part: SAMPLE_PARTS[4], quantity: 1 }
-    ],
-    subtotal: 640.00,
-    vat: 96.00,
-    shipping: 0.00,
-    total: 736.00,
-    paymentMethod: 'mada',
-    paymentStatus: 'Paid',
-    deliveryStatus: 'Processing',
-    trackingNumber: 'ARM-551029418',
-    carrier: 'Aramex KSA',
-    zatcaQrString: 'AQZTYXVkaSBBdXRvUGFydHMDFDEwMTIzNDU2NzgwMDAwMwMTMjAyNi0xMC0xM1QxNjowNTowMFoEBjczNi4wMAEFOTYuMDA='
-  }
-];
+export const INITIAL_ORDERS = [];

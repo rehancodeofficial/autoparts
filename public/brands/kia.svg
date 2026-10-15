@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40">
+  <text x="50" y="29" font-family="sans-serif" font-weight="900" font-size="28" fill="#C41230" text-anchor="middle" letter-spacing="4">KIA</text>
+  <ellipse cx="50" cy="20" rx="46" ry="17" fill="none" stroke="#C41230" stroke-width="3" />
+</svg>
