@@ -12,6 +12,9 @@ import { LoginPage } from './components/LoginPage';
 import { SignUpPage } from './components/SignUpPage';
 import { AccountPage } from './components/AccountPage';
 import { ProductDetailPage } from './components/ProductDetailPage';
+import { AboutUsPage } from './components/AboutUsPage';
+import { ContactUsPage } from './components/ContactUsPage';
+import { LegalPage } from './components/LegalPage';
 import { useAuth } from './context/AuthContext';
 import {
   Search, ShoppingCart, Phone, MessageSquare, ChevronRight, ChevronLeft,
@@ -22,7 +25,7 @@ import {
 export function App() {
   const { user, logout } = useAuth();
   const [lang, setLang] = useState<'en' | 'ar'>('en');
-  const [view, setView] = useState<'store' | 'admin' | 'login' | 'signup' | 'account' | '404' | 'product'>('store');
+  const [view, setView] = useState<'store' | 'admin' | 'login' | 'signup' | 'account' | '404' | 'product' | 'about' | 'contact' | 'terms' | 'privacy' | 'cookies'>('store');
   const [selectedPdpPart, setSelectedPdpPart] = useState<Part | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [intendedDestination, setIntendedDestination] = useState<string | null>(null);
@@ -392,7 +395,7 @@ export function App() {
         >
           {[
             { label: 'HOME', action: () => { setView('store'); setActiveDropdown(null); setIsVehicleMenuOpen(false); } },
-            { label: 'ABOUT US', action: () => { const el = document.getElementById('part-finder-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setActiveDropdown(null); setIsVehicleMenuOpen(false); } },
+            { label: 'ABOUT US', action: () => { setView('about'); setActiveDropdown(null); setIsVehicleMenuOpen(false); window.scrollTo(0, 0); } },
             {
               label: 'CAR CARE',
               items: [
@@ -481,7 +484,7 @@ export function App() {
               ]
             },
             { label: 'DEALS', isRed: true, action: () => { const el = document.getElementById('featured-deals-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setActiveDropdown(null); setIsVehicleMenuOpen(false); } },
-            { label: 'CONTACT US', action: () => { const el = document.getElementById('part-finder-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setActiveDropdown(null); setIsVehicleMenuOpen(false); } },
+            { label: 'CONTACT US', action: () => { setView('contact'); setActiveDropdown(null); setIsVehicleMenuOpen(false); window.scrollTo(0, 0); } },
           ].map((item) => {
             const isVehicleActive = item.isVehicleDropdown && isVehicleMenuOpen;
             const isNavDropdownActive = activeDropdown === item.label;
@@ -943,6 +946,16 @@ export function App() {
             onAddToCart={handleAddToCart}
           />
         </main>
+      ) : view === 'about' ? (
+        <AboutUsPage onNavigateHome={() => setView('store')} />
+      ) : view === 'contact' ? (
+        <ContactUsPage onNavigateHome={() => setView('store')} />
+      ) : view === 'terms' ? (
+        <LegalPage page="terms" />
+      ) : view === 'privacy' ? (
+        <LegalPage page="privacy" />
+      ) : view === 'cookies' ? (
+        <LegalPage page="cookies" />
       ) : (
         /* =========================================================================
             STOREFRONT MAIN BODY
@@ -1357,192 +1370,43 @@ export function App() {
           </section>
 
           {/* =========================================================================
-              5. FEATURED CATEGORIES (4 Dark Graphic Cards)
+              5. FEATURED CATEGORIES
               ========================================================================= */}
           <section style={{ maxWidth: '1200px', margin: '0 auto 40px auto', padding: '0 24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <div>
-                <h2 style={{ fontSize: '20px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#1A1A1A', margin: 0 }}>
-                  FEATURED CATEGORIES
-                </h2>
-              </div>
-              <div style={{ fontSize: '12px', color: '#E53935', fontWeight: 700, cursor: 'pointer' }}>
-                BROWSE ALL CATEGORIES &gt;
-              </div>
+              <h2 style={{ fontSize: '20px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#1A1A1A', margin: 0 }}>
+                FEATURED CATEGORIES
+              </h2>
             </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
-              {[
-                { title: 'BRAKING SYSTEMS', sub: 'Rotors, pads, calipers & brake lines', count: '1,450+ Products', img: 'https://images.unsplash.com/photo-1600790142055-619df03207e6?w=600&q=80' },
-                { title: 'ENGINE COMPONENTS', sub: 'Pistons, camshafts & injectors', count: '3,800+ Products', img: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=600&q=80' },
-                { title: 'SUSPENSION & STEERING', sub: 'Coilovers, struts, sway bars & bushings', count: '2,100+ Products', img: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=600&q=80' },
-                { title: 'BODY & AERODYNAMICS', sub: 'Fenders, splitters, spoilers & widebodies', count: '950+ Products', img: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80' }
-              ].map(cat => (
-                <div
-                  key={cat.title}
-                  style={{
-                    height: '240px',
-                    borderRadius: '8px',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    backgroundImage: `url(${cat.img})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    cursor: 'pointer'
-                  }}
-                  className="hover-lift"
-                >
-                  <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.92) 100%)',
-                    padding: '16px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                      <span style={{
-                        backgroundColor: 'rgba(0,0,0,0.6)',
-                        color: '#ffffff',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        padding: '3px 8px',
-                        borderRadius: '4px'
-                      }}>
-                        {cat.count}
-                      </span>
-                    </div>
-
-                    <div>
-                      <div style={{ fontSize: '16px', fontWeight: 900, color: '#ffffff', textTransform: 'uppercase', marginBottom: '4px' }}>
-                        {cat.title}
-                      </div>
-                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', lineHeight: '14px' }}>
-                        {cat.sub}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div style={{
+              backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #E0E0E0',
+              padding: '48px 24px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+            }}>
+              <Package size={36} color="#CCCCCC" style={{ marginBottom: '12px' }} />
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#999999', marginBottom: '6px' }}>No Featured Categories Yet</div>
+              <div style={{ fontSize: '13px', color: '#BBBBBB' }}>Featured categories will appear here once added.</div>
             </div>
           </section>
 
           {/* =========================================================================
-              6. FLASH AUTO DEALS & CLEARANCE (3 Cards: SAR 799, 1,850, 420)
+              6. DEALS & CLEARANCE
               ========================================================================= */}
-          <section style={{ maxWidth: '1200px', margin: '0 auto 40px auto', padding: '0 24px' }}>
+          <section id="featured-deals-section" style={{ maxWidth: '1200px', margin: '0 auto 40px auto', padding: '0 24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Flame size={20} color="#E53935" />
                 <h2 style={{ fontSize: '20px', fontWeight: 900, textTransform: 'uppercase', color: '#1A1A1A', margin: 0 }}>
-                  FLASH AUTO DEALS & CLEARANCE
+                  DEALS & CLEARANCE
                 </h2>
               </div>
-              <div style={{ fontSize: '11px', color: '#666666', fontWeight: 700, textTransform: 'uppercase' }}>
-                ⏰ Limited-Time Inventory Reserves
-              </div>
             </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-              {[
-                {
-                  id: 'd1',
-                  badge: 'SAVE 35%',
-                  title: 'Brembo Racing Carbon-Ceramic Front Brake Pads Set',
-                  specs: 'Fits LC300, Patrol Y62, Sierra Denali',
-                  price: 'SAR 799',
-                  oldPrice: 'SAR 1,220',
-                  stockTag: '14 Units In Stock'
-                },
-                {
-                  id: 'd2',
-                  badge: 'SAVE 28%',
-                  title: 'Bilstein B8 Heavy-Duty Gas Pressure Shock Absorber Kit',
-                  specs: 'Complete set of 4 dampers for extreme desert travel',
-                  price: 'SAR 1,850',
-                  oldPrice: 'SAR 2,550',
-                  stockTag: '8 Sets Left In Riyadh'
-                },
-                {
-                  id: 'd3',
-                  badge: 'SAVE 40%',
-                  title: 'K&N High-Flow Performance Cold Air Intake System',
-                  specs: 'Mandrel-bent thermal heat shield with oiled dual filter',
-                  price: 'SAR 420',
-                  oldPrice: 'SAR 699',
-                  stockTag: '21 Kits Available'
-                }
-              ].map(deal => (
-                <div
-                  key={deal.id}
-                  style={{
-                    backgroundColor: '#1E1E1E',
-                    color: '#ffffff',
-                    borderRadius: '8px',
-                    padding: '20px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    minHeight: '210px'
-                  }}
-                  className="hover-lift"
-                >
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                      <span style={{
-                        backgroundColor: '#FF6600',
-                        color: '#1A1A1A',
-                        fontSize: '11px',
-                        fontWeight: 900,
-                        padding: '3px 8px',
-                        borderRadius: '3px'
-                      }}>
-                        {deal.badge}
-                      </span>
-                      <span style={{ fontSize: '11px', color: '#999999' }}>{deal.stockTag}</span>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '10px' }}>
-                      <span style={{ fontSize: '28px', fontWeight: 900, color: '#ffffff' }}>
-                        {deal.price}
-                      </span>
-                      <span style={{ fontSize: '13px', color: '#777777', textDecoration: 'line-through' }}>
-                        {deal.oldPrice}
-                      </span>
-                    </div>
-
-                    <div style={{ fontSize: '14px', fontWeight: 800, color: '#ffffff', marginBottom: '6px', lineHeight: '1.3' }}>
-                      {deal.title}
-                    </div>
-                    <div style={{ fontSize: '11px', color: '#999999', marginBottom: '16px' }}>
-                      {deal.specs}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      const el = document.getElementById('catalog-products-section');
-                      if (el) el.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      backgroundColor: '#E53935',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      fontWeight: 800,
-                      textTransform: 'uppercase',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    CLAIM OFFER
-                  </button>
-                </div>
-              ))}
+            <div style={{
+              backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #E0E0E0',
+              padding: '48px 24px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+            }}>
+              <Sparkles size={36} color="#CCCCCC" style={{ marginBottom: '12px' }} />
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#999999', marginBottom: '6px' }}>No Active Deals Right Now</div>
+              <div style={{ fontSize: '13px', color: '#BBBBBB' }}>Flash deals and clearance offers will be listed here.</div>
             </div>
           </section>
 
@@ -1945,39 +1809,104 @@ export function App() {
                 </div>
               </div>
 
-              {/* Col 2: Shop Categories */}
+              {/* Col 2: Quick Links */}
               <div>
-                <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '14px', letterSpacing: '0.5px' }}>SHOP CATEGORIES</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px', color: '#999999' }}>
-                  <span>Brembo Brake Kits</span>
-                  <span>Direct OEM Filters</span>
-                  <span>Coilovers & Shocks</span>
-                  <span>Exhaust & Downpipes</span>
-                  <span>Alloy Wheels & Tires</span>
+                <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '14px', letterSpacing: '0.5px', color: '#FFFFFF' }}>QUICK LINKS</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
+                  <button
+                    onClick={() => { setView('store'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', color: '#A0A0A0', cursor: 'pointer', fontSize: '13px', transition: 'color 0.2s' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = '#E53935')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = '#A0A0A0')}
+                  >
+                    Home Store
+                  </button>
+                  <button
+                    onClick={() => { setView('about'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', color: '#A0A0A0', cursor: 'pointer', fontSize: '13px', transition: 'color 0.2s' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = '#E53935')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = '#A0A0A0')}
+                  >
+                    About Us
+                  </button>
+                  <button
+                    onClick={() => { setView('contact'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', color: '#A0A0A0', cursor: 'pointer', fontSize: '13px', transition: 'color 0.2s' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = '#E53935')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = '#A0A0A0')}
+                  >
+                    Contact Us
+                  </button>
+                  <button
+                    onClick={() => { setIsRequestModalOpen(true); }}
+                    style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', color: '#A0A0A0', cursor: 'pointer', fontSize: '13px', transition: 'color 0.2s' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = '#E53935')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = '#A0A0A0')}
+                  >
+                    Request a Part
+                  </button>
                 </div>
               </div>
 
-              {/* Col 3: Top Brands */}
+              {/* Col 3: Customer Care */}
               <div>
-                <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '14px', letterSpacing: '0.5px' }}>TOP BRANDS</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px', color: '#999999' }}>
-                  <span>Toyota Genuine</span>
-                  <span>Brembo Racing</span>
-                  <span>Bilstein HD</span>
-                  <span>Motul Motorsport</span>
-                  <span>NGK Spark Plugs</span>
+                <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '14px', letterSpacing: '0.5px', color: '#FFFFFF' }}>CUSTOMER CARE</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
+                  <button
+                    onClick={() => { setView('contact'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', color: '#A0A0A0', cursor: 'pointer', fontSize: '13px', transition: 'color 0.2s' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = '#E53935')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = '#A0A0A0')}
+                  >
+                    Help & Support
+                  </button>
+                  <button
+                    onClick={() => { setView('contact'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', color: '#A0A0A0', cursor: 'pointer', fontSize: '13px', transition: 'color 0.2s' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = '#E53935')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = '#A0A0A0')}
+                  >
+                    Track Order & Shipping
+                  </button>
+                  <button
+                    onClick={() => { setView('terms'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', color: '#A0A0A0', cursor: 'pointer', fontSize: '13px', transition: 'color 0.2s' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = '#E53935')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = '#A0A0A0')}
+                  >
+                    Returns & Refunds
+                  </button>
                 </div>
               </div>
 
-              {/* Col 4: Customer Service */}
+              {/* Col 4: Legal & Policies */}
               <div>
-                <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '14px', letterSpacing: '0.5px' }}>CUSTOMER SERVICE</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px', color: '#999999' }}>
-                  <span>Shipping & Tracking</span>
-                  <span>Warranty Policy</span>
-                  <span>Return & Exchange</span>
-                  <span>ZATCA E-Invoicing</span>
-                  <span>Terms & Conditions</span>
+                <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '14px', letterSpacing: '0.5px', color: '#FFFFFF' }}>LEGAL & POLICIES</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
+                  <button
+                    onClick={() => { setView('terms'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', color: '#A0A0A0', cursor: 'pointer', fontSize: '13px', transition: 'color 0.2s' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = '#E53935')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = '#A0A0A0')}
+                  >
+                    Terms & Conditions
+                  </button>
+                  <button
+                    onClick={() => { setView('privacy'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', color: '#A0A0A0', cursor: 'pointer', fontSize: '13px', transition: 'color 0.2s' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = '#E53935')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = '#A0A0A0')}
+                  >
+                    Privacy Policy
+                  </button>
+                  <button
+                    onClick={() => { setView('cookies'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', color: '#A0A0A0', cursor: 'pointer', fontSize: '13px', transition: 'color 0.2s' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = '#E53935')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = '#A0A0A0')}
+                  >
+                    Cookie Policy
+                  </button>
                 </div>
               </div>
 
