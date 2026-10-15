@@ -15,14 +15,16 @@ import { useAuth } from './context/AuthContext';
 import {
   Search, ShoppingCart, Phone, MessageSquare, ChevronRight, ChevronLeft,
   Car, ShieldCheck, Truck, RefreshCw, Headphones, Check, ArrowRight,
-  User as UserIcon, LogIn, UserPlus, LogOut, Package, MapPin, X, Flame, Sparkles
+  User as UserIcon, LogIn, UserPlus, LogOut, Package, MapPin, X, Flame, Sparkles, Menu
 } from 'lucide-react';
 
 export function App() {
   const { user, logout } = useAuth();
   const [lang, setLang] = useState<'en' | 'ar'>('en');
-  const [view, setView] = useState<'store' | 'admin' | 'login' | 'signup' | 'account'>('store');
+  const [view, setView] = useState<'store' | 'admin' | 'login' | 'signup' | 'account' | '404'>('store');
   const [intendedDestination, setIntendedDestination] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   // Parts & Cart
   const [parts, setParts] = useState<Part[]>(SAMPLE_PARTS);
@@ -68,6 +70,10 @@ export function App() {
       }
       return [...prev, { part, quantity: 1 }];
     });
+    setToastMessage({ text: `Added "${part.name}" to cart!`, type: 'success' });
+    setTimeout(() => {
+      setToastMessage(prev => prev?.text.includes(part.name) ? null : prev);
+    }, 3500);
   };
 
   const handleApplyFinder = (e: React.FormEvent) => {
@@ -157,51 +163,71 @@ export function App() {
         gap: '32px',
         color: '#ffffff'
       }}>
-        {/* Autoparts Logo (Matching Autostore.sa Hexagon/Shield Badge + Two-line Text) */}
-        <div
-          style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', userSelect: 'none', flexShrink: 0 }}
-          onClick={() => setView('store')}
-        >
-          {/* Geometric Hexagon Icon */}
-          <div style={{
-            width: '42px',
-            height: '42px',
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'linear-gradient(135deg, #E53935 0%, #D42B2B 100%)',
-            borderRadius: '10px',
-            boxShadow: '0 3px 10px rgba(229, 57, 53, 0.4)',
-            border: '2px solid rgba(255, 255, 255, 0.2)'
-          }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="12 2 2 8.5 2 15.5 12 22 22 15.5 22 8.5 12 2" />
-              <circle cx="12" cy="12" r="3.5" fill="#ffffff" />
-            </svg>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{
-              fontSize: '22px',
-              fontWeight: 900,
-              fontFamily: 'var(--font-content)',
-              letterSpacing: '0.8px',
+        {/* Autoparts Logo + Mobile Hamburger Button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexShrink: 0 }}>
+          {/* Mobile Hamburger Button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(prev => !prev)}
+            aria-label="Toggle Navigation Menu"
+            style={{
+              display: 'none',
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: '6px',
+              padding: '6px',
               color: '#ffffff',
-              lineHeight: '1.1'
+              cursor: 'pointer'
+            }}
+            className="mobile-menu-toggle"
+          >
+            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+
+          <div
+            style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', userSelect: 'none' }}
+            onClick={() => setView('store')}
+          >
+            {/* Geometric Hexagon Icon */}
+            <div style={{
+              width: '42px',
+              height: '42px',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'linear-gradient(135deg, #E53935 0%, #D42B2B 100%)',
+              borderRadius: '10px',
+              boxShadow: '0 3px 10px rgba(229, 57, 53, 0.4)',
+              border: '2px solid rgba(255, 255, 255, 0.2)'
             }}>
-              AUTOPARTS<span style={{ color: '#E53935' }}>.sa</span>
-            </span>
-            <span style={{
-              fontSize: '9px',
-              fontWeight: 700,
-              letterSpacing: '1.2px',
-              color: 'rgba(255, 255, 255, 0.65)',
-              textTransform: 'uppercase',
-              marginTop: '2px'
-            }}>
-              NO.1 ONLINE AUTO STORE
-            </span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 2 8.5 2 15.5 12 22 22 15.5 22 8.5 12 2" />
+                <circle cx="12" cy="12" r="3.5" fill="#ffffff" />
+              </svg>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{
+                fontSize: '22px',
+                fontWeight: 900,
+                fontFamily: 'var(--font-content)',
+                letterSpacing: '0.8px',
+                color: '#ffffff',
+                lineHeight: '1.1'
+              }}>
+                AUTOPARTS
+              </span>
+              <span style={{
+                fontSize: '9px',
+                fontWeight: 700,
+                letterSpacing: '1.2px',
+                color: 'rgba(255, 255, 255, 0.65)',
+                textTransform: 'uppercase',
+                marginTop: '2px'
+              }}>
+                NO.1 ONLINE AUTO STORE • KSA
+              </span>
+            </div>
           </div>
         </div>
 
@@ -247,17 +273,17 @@ export function App() {
             <Phone size={22} color="#ffffff" style={{ strokeWidth: 1.8 }} />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px' }}>
-                CALL US
+                TOLL FREE KSA
               </span>
-              <a href="tel:03212111406" style={{ fontSize: '15px', fontWeight: 700, color: '#ffffff', textDecoration: 'none', letterSpacing: '0.3px' }}>
-                0321 2111 406
+              <a href="tel:+9668001249900" style={{ fontSize: '15px', fontWeight: 700, color: '#ffffff', textDecoration: 'none', letterSpacing: '0.3px' }}>
+                800 124 9900
               </a>
             </div>
           </div>
 
           {/* WhatsApp Icon */}
           <a
-            href="https://wa.me/923212111406"
+            href="https://wa.me/966501234567"
             target="_blank"
             rel="noopener noreferrer"
             title="Chat on WhatsApp"
@@ -316,7 +342,7 @@ export function App() {
               </span>
             </div>
             <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>
-              Rs {cartTotal.toLocaleString('en-US')}
+              SAR {cartTotal.toLocaleString('en-US')}
             </span>
           </div>
         </div>
@@ -333,10 +359,10 @@ export function App() {
         flexWrap: 'wrap'
       }}>
         {[
-          'FREE DELIVERY OVER RS 3,000',
-          'CASH ON DELIVERY',
-          'NATIONWIDE SHIPPING',
-          'INSTALLATION SUPPORT'
+          'FREE EXPRESS SHIPPING OVER 300 SAR',
+          '100% GENUINE OEM GUARANTEED',
+          'CASH ON DELIVERY IN KSA',
+          'DISPATCH FROM RIYADH & JEDDAH'
         ].map((badge) => (
           <div
             key={badge}
@@ -523,13 +549,13 @@ export function App() {
                   paddingTop: '8px'
                 }}>
                   {[
-                    { label: 'All Body Kits', icon: '🚗' },
-                    { label: '4x4 / SUV', icon: '🚙' },
-                    { label: 'Side Steps', icon: '🛞' },
-                    { label: 'Snorkel', icon: '🤿' },
-                    { label: 'Armoured Bumpers', icon: '🛡️' },
-                    { label: 'Bull Bars & Guards', icon: '⚙️' },
-                    { label: 'Winches', icon: '⛓️' }
+                    { label: 'All Body Kits', tag: 'AERO' },
+                    { label: '4x4 / SUV', tag: 'OFF-ROAD' },
+                    { label: 'Side Steps', tag: 'STEPS' },
+                    { label: 'Snorkel', tag: 'INTAKE' },
+                    { label: 'Armoured Bumpers', tag: 'GUARD' },
+                    { label: 'Bull Bars & Guards', tag: 'PROTECTION' },
+                    { label: 'Winches', tag: 'RECOVERY' }
                   ].map((cat) => (
                     <div
                       key={cat.label}
@@ -543,7 +569,7 @@ export function App() {
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '12px',
+                        gap: '10px',
                         padding: '16px 10px',
                         borderRadius: '8px',
                         backgroundColor: 'rgba(255,255,255,0.03)',
@@ -563,7 +589,20 @@ export function App() {
                         (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.05)';
                       }}
                     >
-                      <div style={{ fontSize: '32px' }}>{cat.icon}</div>
+                      <div style={{
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '8px',
+                        backgroundColor: 'rgba(229,57,53,0.15)',
+                        color: '#E53935',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '11px',
+                        fontWeight: 900
+                      }}>
+                        {cat.tag.slice(0, 3)}
+                      </div>
                       <span style={{ fontSize: '11px', color: '#D0D0D0', fontWeight: 600 }}>
                         {cat.label}
                       </span>
@@ -573,11 +612,147 @@ export function App() {
               </div>
             </div>
           </div>
+        {/* Mobile Navigation Drawer */}
+        {isMobileMenuOpen && (
+          <div
+            style={{
+              backgroundColor: '#161616',
+              borderTop: '1px solid #222222',
+              borderBottom: '2px solid #E53935',
+              padding: '16px 20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px'
+            }}
+          >
+            {[
+              { label: 'HOME', action: () => { setView('store'); setIsMobileMenuOpen(false); } },
+              { label: 'SHOP BY VEHICLE', action: () => { const el = document.getElementById('part-finder-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false); } },
+              { label: 'CAR CARE', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false); } },
+              { label: 'EXTERIOR', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false); } },
+              { label: 'LIGHTING', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false); } },
+              { label: 'INTERIOR', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false); } },
+              { label: 'MATS', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false); } },
+              { label: 'ELECTRONICS', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false); } },
+              { label: 'CAR PARTS', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false); } },
+              { label: 'OILS & FILTERS', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false); } },
+              { label: 'WHEELS & TYRES', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false); } },
+              { label: 'TOOLS', action: () => { const el = document.getElementById('catalog-products-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false); } },
+              { label: 'BRANDS', action: () => { const el = document.getElementById('brands-grid-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false); } },
+              { label: 'DEALS', isRed: true, action: () => { const el = document.getElementById('featured-deals-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false); } }
+            ].map((link) => (
+              <button
+                key={link.label}
+                onClick={link.action}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: link.isRed ? '#E53935' : '#D0D0D0',
+                  textAlign: 'left',
+                  padding: '10px 12px',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  borderBottom: '1px solid rgba(255,255,255,0.04)'
+                }}
+              >
+                {link.label}
+              </button>
+            ))}
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #222222' }}>
+              <button
+                onClick={() => { if (!user) setView('login'); else setView('account'); setIsMobileMenuOpen(false); }}
+                style={{
+                  flex: 1,
+                  backgroundColor: '#222222',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                {user ? user.name : 'My Account'}
+              </button>
+              <button
+                onClick={() => { setView(view === 'store' ? 'admin' : 'store'); setIsMobileMenuOpen(false); }}
+                style={{
+                  flex: 1,
+                  backgroundColor: '#E53935',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                {view === 'store' ? 'Admin Portal' : 'Store'}
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
-      {/* View routing for login/admin */}
-      {view === 'login' ? (
+      {/* View routing for login/admin/404 */}
+      {view === '404' ? (
+        <main style={{ maxWidth: '800px', width: '100%', margin: '80px auto', padding: '0 24px', textAlign: 'center', flex: 1 }}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            padding: '60px 32px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+            border: '1px solid #E0E0E0'
+          }}>
+            <div style={{ fontSize: '72px', fontWeight: 900, color: '#E53935', lineHeight: '1', marginBottom: '16px', fontFamily: 'var(--font-content)' }}>
+              404
+            </div>
+            <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1A1A1A', marginBottom: '12px', textTransform: 'uppercase' }}>
+              Part Or Page Not Found
+            </h1>
+            <p style={{ fontSize: '14px', color: '#666666', maxWidth: '440px', margin: '0 auto 28px auto', lineHeight: '1.5' }}>
+              The auto part or catalog page you requested has been moved, relocated, or is no longer listed in our database.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={() => setView('store')}
+                style={{
+                  backgroundColor: '#E53935',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '50px',
+                  padding: '12px 28px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                RETURN TO CATALOG
+              </button>
+              <button
+                onClick={() => setIsRequestModalOpen(true)}
+                style={{
+                  backgroundColor: '#1A1A1A',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '50px',
+                  padding: '12px 28px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                REQUEST PART BY VIN
+              </button>
+            </div>
+          </div>
+        </main>
+      ) : view === 'login' ? (
         <main style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', padding: '40px 24px', flex: 1 }}>
           <LoginPage lang={lang} onSuccess={() => setView('store')} onNavigateToSignUp={() => setView('signup')} />
         </main>
@@ -625,17 +800,53 @@ export function App() {
 
           {/* =========================================================================
               3. QUICK-LINK CARDS (Overlapping Hero: Brake Discs, Suspension, etc.)
+              Exact Match to User Screenshot 1 with Real Vector Graphics
               ========================================================================= */}
-          <section style={{ maxWidth: '1200px', margin: '-40px auto 40px auto', padding: '0 24px', position: 'relative', zIndex: 10 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+          <section style={{ maxWidth: '1240px', margin: '-32px auto 36px auto', padding: '0 20px', position: 'relative', zIndex: 10 }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(184px, 1fr))',
+              gap: '10px',
+              alignItems: 'stretch'
+            }}>
               {[
-                { title: 'BRAKE DISCS & PADS', desc: 'Brembo & Advics OEM', icon: '🛑', price: 'FROM 220 SAR' },
-                { title: 'SUSPENSION COILOVERS', desc: 'Bilstein & Fox Off-Road', icon: '⚙️', price: 'FROM 1,450 SAR' },
-                { title: 'IGNITION PLUGS & COILS', desc: 'NGK Laser Iridium & Denso', icon: '⚡', price: 'FROM 110 SAR' },
-                { title: 'ENGINE OILS & FLUIDS', desc: 'Motul 300V, Castrol Edge, Coolant', icon: '🛢️', price: 'FROM 45 SAR' },
-                { title: 'TURBO CHARGERS', desc: 'Garrett Twin-Turbo & Actuators', icon: '🌀', price: 'FROM 3,200 SAR' },
-                { title: 'PERFORMANCE EXHAUST', desc: 'HKS Hi-Power Stainless Steel', icon: '💨', price: 'FROM 2,100 SAR' }
-              ].map(item => (
+                {
+                  title: 'BRAKE DISCS & PADS',
+                  desc: 'Brembo & Advics OEM',
+                  price: 'FROM 220 SAR',
+                  icon: '/categories/quick/brakes.svg'
+                },
+                {
+                  title: 'SUSPENSION COILOVERS',
+                  desc: 'Bilstein & Fox Off-Road',
+                  price: 'FROM 1,450 SAR',
+                  icon: '/categories/quick/suspension.svg'
+                },
+                {
+                  title: 'IGNITION PLUGS & COILS',
+                  desc: 'NGK Laser Iridium & Denso',
+                  price: 'FROM 110 SAR',
+                  icon: '/categories/quick/ignition.svg'
+                },
+                {
+                  title: 'ENGINE OILS & FLUIDS',
+                  desc: 'Motul 300V, Castrol Edge, Coolant',
+                  price: 'FROM 45 SAR',
+                  icon: '/categories/quick/oils.svg'
+                },
+                {
+                  title: 'TURBO CHARGERS',
+                  desc: 'Garrett Twin-Turbo & Actuators',
+                  price: 'FROM 3,200 SAR',
+                  icon: '/categories/quick/turbo.svg'
+                },
+                {
+                  title: 'PERFORMANCE EXHAUST',
+                  desc: 'HKS Hi-Power Stainless Steel',
+                  price: 'FROM 2,100 SAR',
+                  icon: '/categories/quick/exhaust.svg'
+                }
+              ].map((item) => (
                 <div
                   key={item.title}
                   onClick={() => {
@@ -644,29 +855,69 @@ export function App() {
                   }}
                   style={{
                     backgroundColor: '#ffffff',
-                    borderRadius: '6px',
+                    borderRadius: '8px',
                     padding: '14px 14px 12px 14px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                    border: '1px solid #DDDDDD',
+                    boxShadow: '0 3px 12px rgba(0,0,0,0.08)',
+                    border: '1px solid #E2E2E2',
                     display: 'flex',
                     flexDirection: 'column',
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease'
+                    transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease'
                   }}
                   className="hover-lift"
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '18px' }}>{item.icon}</span>
-                    <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#1A1A1A', letterSpacing: '0.3px' }}>
+                  {/* Header Row: Icon + Title */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                    <div style={{
+                      width: '28px',
+                      height: '28px',
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <img
+                        src={item.icon}
+                        alt={item.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                      />
+                    </div>
+                    <span style={{
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      color: '#1A1A1A',
+                      letterSpacing: '0.4px',
+                      lineHeight: '1.25'
+                    }}>
                       {item.title}
                     </span>
                   </div>
-                  <div style={{ fontSize: '11px', color: '#666666', marginBottom: '10px', height: '28px', lineHeight: '14px' }}>
+
+                  {/* Subtitle / brands */}
+                  <div style={{
+                    fontSize: '11px',
+                    color: '#666666',
+                    marginBottom: '10px',
+                    lineHeight: '1.35',
+                    minHeight: '28px'
+                  }}>
                     {item.desc}
                   </div>
-                  <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f0f0f0', paddingTop: '6px' }}>
-                    <span style={{ fontSize: '10px', color: '#888888' }}>Price</span>
-                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#E53935' }}>{item.price}</span>
+
+                  {/* Price Tag Footer */}
+                  <div style={{
+                    marginTop: 'auto',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderTop: '1px solid #F0F0F0',
+                    paddingTop: '6px'
+                  }}>
+                    <span style={{ fontSize: '10px', color: '#888888', textTransform: 'uppercase', fontWeight: 600 }}>Price</span>
+                    <span style={{ fontSize: '11px', fontWeight: 900, color: '#E53935', letterSpacing: '0.2px' }}>
+                      {item.price}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -1046,14 +1297,14 @@ export function App() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px' }}>
               {[
-                { name: 'TOYOTA', desc: 'Land Cruiser, Hilux', icon: '🚗' },
-                { name: 'NISSAN', desc: 'Patrol Y62, GT-R', icon: '🚙' },
-                { name: 'FORD', desc: 'Raptor, Mustang', icon: '🏎️' },
-                { name: 'GMC', desc: 'Sierra, Yukon', icon: '🛻' },
-                { name: 'LEXUS', desc: 'LX600, ES350', icon: '🚘' },
-                { name: 'HYUNDAI', desc: 'Sonata, Elantra', icon: '🚐' }
+                { name: 'TOYOTA', desc: 'Land Cruiser, Hilux', logo: '/brands/toyota.svg' },
+                { name: 'NISSAN', desc: 'Patrol Y62, GT-R', logo: '/brands/nissan.svg' },
+                { name: 'FORD', desc: 'Raptor, Mustang, F-150', logo: '/brands/ford.svg' },
+                { name: 'GMC', desc: 'Sierra, Yukon Denali', logo: '/brands/gmc.svg' },
+                { name: 'LEXUS', desc: 'LX600, ES350, GX', logo: '/brands/lexus.svg' },
+                { name: 'HYUNDAI', desc: 'Sonata, Tucson, Santa Fe', logo: '/brands/hyundai.svg' }
               ].map(brand => (
                 <div
                   key={brand.name}
@@ -1066,19 +1317,33 @@ export function App() {
                     backgroundColor: '#ffffff',
                     border: '1px solid #E0E0E0',
                     borderRadius: '8px',
-                    padding: '20px 10px 16px',
+                    padding: '20px 14px 16px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
                   }}
                   className="hover-lift"
                 >
-                  <span style={{ fontSize: '32px', marginBottom: '8px' }}>{brand.icon}</span>
+                  <div style={{
+                    width: '64px',
+                    height: '44px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '10px'
+                  }}>
+                    <img
+                      src={brand.logo}
+                      alt={brand.name}
+                      style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                    />
+                  </div>
                   <div style={{ fontSize: '13px', fontWeight: 800, textTransform: 'uppercase', color: '#1A1A1A', marginBottom: '2px' }}>
                     {brand.name}
                   </div>
-                  <div style={{ fontSize: '10px', color: '#888888' }}>
+                  <div style={{ fontSize: '10px', color: '#888888', textAlign: 'center' }}>
                     {brand.desc}
                   </div>
                 </div>
@@ -1294,23 +1559,36 @@ export function App() {
               </div>
 
               {/* 4 Feature Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
                 {[
-                  { title: '100% GENUINE OEM', desc: 'Direct sourcing from tier-1 global manufacturers.', icon: '🛡️' },
-                  { title: 'VIN FITMENT VERIFIED', desc: 'Cross-checked with official databases before fulfillment.', icon: '🎯' },
-                  { title: 'LOCAL WAREHOUSES', desc: 'Fast delivery from hubs located in Riyadh and Jeddah.', icon: '🏢' },
-                  { title: 'EXPERT ENGINE SUPPORT', desc: 'Consult automotive specialists on WhatsApp anytime.', icon: '👨‍🔧' }
+                  { title: '100% GENUINE OEM', desc: 'Direct sourcing from tier-1 global manufacturers with factory certificates.', tag: 'CERTIFIED' },
+                  { title: 'VIN FITMENT VERIFIED', desc: 'Cross-checked with official databases before fulfillment for zero errors.', tag: 'ACCURACY' },
+                  { title: 'LOCAL WAREHOUSES', desc: 'Fast delivery from hubs located in Riyadh and Jeddah across the Kingdom.', tag: 'EXPRESS' },
+                  { title: 'EXPERT ENGINE SUPPORT', desc: 'Consult certified automotive specialists on WhatsApp anytime.', tag: 'SUPPORT' }
                 ].map(feat => (
                   <div
                     key={feat.title}
                     style={{
                       backgroundColor: 'rgba(255,255,255,0.03)',
-                      border: '1px solid rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.08)',
                       borderRadius: '12px',
-                      padding: '24px 20px'
+                      padding: '24px 20px',
+                      transition: 'border-color 0.2s ease'
                     }}
                   >
-                    <div style={{ fontSize: '26px', marginBottom: '12px' }}>{feat.icon}</div>
+                    <div style={{
+                      display: 'inline-block',
+                      backgroundColor: 'rgba(229, 57, 53, 0.15)',
+                      color: '#E53935',
+                      fontSize: '10px',
+                      fontWeight: 800,
+                      letterSpacing: '1px',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      marginBottom: '14px'
+                    }}>
+                      {feat.tag}
+                    </div>
                     <div style={{ fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px' }}>
                       {feat.title}
                     </div>
@@ -1541,13 +1819,19 @@ export function App() {
                       <circle cx="12" cy="12" r="3" fill="#ffffff" />
                     </svg>
                   </div>
-                  <span style={{ fontSize: '20px', fontWeight: 900, color: '#ffffff' }}>AUTOPARTS<span style={{ color: '#E53935' }}>.sa</span></span>
+                  <span style={{ fontSize: '20px', fontWeight: 900, color: '#ffffff' }}>AUTOPARTS</span>
                 </div>
                 <p style={{ fontSize: '12px', color: '#999999', lineHeight: '18px', marginBottom: '14px' }}>
-                  No.1 Online Auto Store. Supplying OEM & high-grade performance parts and car accessories nationwide.
+                  No.1 Online Auto Store in Saudi Arabia. Supplying verified OEM & performance parts across the Kingdom.
                 </p>
-                <div style={{ fontSize: '11px', color: '#777777' }}>
-                  📍 Nationwide Delivery | Phone: 0321 2111 406
+                <div style={{ fontSize: '11px', color: '#777777', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span>📍 Riyadh Distribution Hub, Anas Ibn Malik Rd, KSA</span>
+                  <span>
+                    📞 Phone: <a href="tel:+9668001249900" style={{ color: '#E53935', textDecoration: 'none' }}>+966 800 124 9900</a>
+                  </span>
+                  <span>
+                    ✉️ Email: <a href="mailto:support@autoparts.sa" style={{ color: '#E53935', textDecoration: 'none' }}>support@autoparts.sa</a>
+                  </span>
                 </div>
               </div>
 
@@ -1624,7 +1908,7 @@ export function App() {
               </div>
             </div>
 
-            {/* Copyright bar with payment badges */}
+            {/* Copyright bar with payment badges and credit */}
             <div style={{
               maxWidth: '1200px',
               margin: '36px auto 0 auto',
@@ -1633,11 +1917,13 @@ export function App() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
               fontSize: '11px',
               color: '#777777'
             }}>
               <div>
-                © 2026 AUTOPARTS. All Rights Reserved.
+                © 2026 AUTOPARTS. All Rights Reserved. • Designed BY <a href="https://rehanhussain.dev/" target="_blank" rel="noopener noreferrer" style={{ color: '#E53935', textDecoration: 'none', fontWeight: 700 }}>Muhammad Rehan Hussain</a>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -1681,6 +1967,46 @@ export function App() {
         onSubmit={() => { }}
         lang={lang}
       />
+
+      {/* Toast Notification Banner (Success & Error Messages) */}
+      {toastMessage && (
+        <div
+          className="toast-popup"
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: toastMessage.type === 'success' ? '#1b5e20' : '#b71c1c',
+            color: '#ffffff',
+            padding: '12px 24px',
+            borderRadius: '50px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            zIndex: 9999,
+            fontSize: '13px',
+            fontWeight: 700
+          }}
+        >
+          <span>{toastMessage.type === 'success' ? '✓' : '✕'}</span>
+          <span>{toastMessage.text}</span>
+          <button
+            onClick={() => setToastMessage(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#ffffff',
+              cursor: 'pointer',
+              marginLeft: '8px',
+              padding: 0
+            }}
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
     </div>
   );

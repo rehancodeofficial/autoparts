@@ -272,53 +272,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ lang, onShopNow, onE
             </div>
           )}
 
-          {/* Arrow Navigation */}
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={prevSlide}
-              aria-label="Previous slide"
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '6px',
-                backgroundColor: 'rgba(0,0,0,0.5)',
-                backdropFilter: 'blur(4px)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s ease',
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(212,43,43,0.7)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(0,0,0,0.5)'; }}
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              onClick={nextSlide}
-              aria-label="Next slide"
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '6px',
-                backgroundColor: 'rgba(0,0,0,0.5)',
-                backdropFilter: 'blur(4px)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s ease',
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(212,43,43,0.7)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(0,0,0,0.5)'; }}
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
+
         </div>
       </div>
 

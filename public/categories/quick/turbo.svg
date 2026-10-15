@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+  <circle cx="20" cy="20" r="16" fill="#0288D1" stroke="#01579B" stroke-width="1.5" />
+  <!-- Turbo compressor swirl blades -->
+  <path d="M20 20 Q24 10 32 14 Q26 22 20 20 Q14 26 8 20 Q18 16 20 20" fill="#ffffff" />
+  <circle cx="20" cy="20" r="4" fill="#01579B" stroke="#ffffff" stroke-width="1" />
+</svg>
