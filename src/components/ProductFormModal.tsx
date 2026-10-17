@@ -156,6 +156,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
       const method = initialProduct?.id ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
+        credentials: 'include',
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

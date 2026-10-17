@@ -13,6 +13,8 @@ export interface VehicleMake {
   id: string;
   name: string;
   slug: string;
+  /** Optional country of origin shown on the manufacturer grid. */
+  country?: string | null;
   logoUrl: string | null;
   description: string | null;
   displayOrder: number;
@@ -159,6 +161,10 @@ export interface Part {
   status?: 'DRAFT' | 'PUBLISHED' | 'DISABLED' | 'ARCHIVED';
   isFeatured?: boolean;
   showOnHomepage?: boolean;
+  /** Derived: true when salePrice undercuts sellingPrice. */
+  isDeal?: boolean;
+  /** Derived: the "17% OFF" badge the deals sections render. */
+  dealBadge?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -170,25 +176,162 @@ export interface CartItem {
 
 export type PaymentMethod = 'mada' | 'apple_pay' | 'visa_mastercard' | 'stc_pay' | 'tamara' | 'tabby';
 
+export type OrderStatus =
+  | 'PENDING_PAYMENT' | 'PAID' | 'APPROVED' | 'REJECTED' | 'PROCESSING'
+  | 'DISPATCHED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'PAYMENT_FAILED'
+  | 'EXPIRED' | 'RETURN_REQUESTED' | 'RETURNED' | 'REFUNDED';
+
+export interface OrderItemRecord {
+  id: string;
+  productId: string;
+  productSlug?: string | null;
+  sku: string | null;
+  nameEn: string;
+  nameAr: string;
+  brandName: string | null;
+  imageUrl: string | null;
+  unitPrice: number;
+  quantity: number;
+  lineTotal: number;
+  currentStock?: number | null;
+}
+
+export interface PaymentRecord {
+  id: string;
+  provider: string;
+  providerPaymentId: string | null;
+  method: string;
+  status: string;
+  amount: number;
+  refunded: number;
+  currency: string;
+  isTestMode: boolean;
+  failureReason: string | null;
+  verifiedAt: string | null;
+  createdAt: string;
+}
+
+export interface RefundRecord {
+  id: string;
+  paymentId: string;
+  amount: number;
+  currency: string;
+  status: string;
+  reason: string | null;
+  providerRefundId: string | null;
+  createdAt: string;
+}
+
+export interface OrderEventRecord {
+  id: string;
+  eventType: string;
+  from: string | null;
+  to: string | null;
+  message: string | null;
+  isInternal: boolean;
+  actorName: string | null;
+  metadata: any;
+  createdAt: string;
+}
+
+/**
+ * An order as the API returns it. Money is in SAR; the database stores
+ * integer halalas and converts at the boundary.
+ */
 export interface Order {
   id: string;
   orderNumber: string;
-  date: string;
+  status: OrderStatus;
+  date?: string;
   customerName: string;
-  customerPhone: string;
+  customerEmail: string | null;
+  customerPhone: string | null;
   city: string;
+  district?: string | null;
   address: string;
-  items: CartItem[];
+  postalCode?: string | null;
+  country?: string;
+  addressNotes?: string | null;
+  isGuest?: boolean;
+  userId?: string | null;
+
+  items?: CartItem[];
+  itemCount?: number;
+  unitCount?: number;
+
   subtotal: number;
-  vat: number; // 15%
+  discount?: number;
+  discountCode?: string | null;
+  vat: number;
+  vatPercent?: number;
   shipping: number;
   total: number;
-  paymentMethod: PaymentMethod;
-  paymentStatus: 'Paid' | 'Pending' | 'Failed' | 'Refunded';
-  deliveryStatus: 'Processing' | 'Packed' | 'Shipped' | 'Out for Delivery' | 'Delivered';
-  trackingNumber: string;
-  carrier: string;
-  zatcaQrString: string;
+  refunded?: number;
+  currency?: string;
+
+  paymentMethod: PaymentMethod | string;
+  paymentStatus: 'Paid' | 'Pending' | 'Failed' | 'Refunded' | 'Partially Refunded' | 'Cancelled' | string;
+  deliveryStatus: string;
+  trackingNumber: string | null;
+  trackingToken?: string;
+  carrier: string | null;
+  zatcaQrString?: string | null;
+  internalNotes?: string | null;
+  cancellationReason?: string | null;
+  stockCommitted?: boolean;
+
+  createdAt?: string;
+  updatedAt?: string;
+  paidAt?: string | null;
+  dispatchedAt?: string | null;
+  shippedAt?: string | null;
+  deliveredAt?: string | null;
+  cancelledAt?: string | null;
+
+  allowedTransitions?: OrderStatus[];
+}
+
+export interface OrderDetail {
+  order: Order;
+  items: OrderItemRecord[];
+  payments: PaymentRecord[];
+  refunds: RefundRecord[];
+  events: OrderEventRecord[];
+}
+
+export interface Discount {
+  id: string;
+  code: string;
+  descriptionEn: string | null;
+  descriptionAr: string | null;
+  type: 'PERCENT' | 'FIXED';
+  value: number;
+  minOrderAmount: number;
+  maxDiscountAmount: number | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  usageLimit: number | null;
+  usageCount: number;
+  perCustomerLimit: number | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrderStats {
+  totalOrders: number;
+  paidOrders: number;
+  pendingPayment: number;
+  failedPayment: number;
+  awaitingApproval: number;
+  inFulfilment: number;
+  inTransit: number;
+  delivered: number;
+  cancelled: number;
+  refunded: number;
+  grossPaidRevenue: number;
+  refundedAmount: number;
+  netRevenue: number;
 }
 
 export interface PartRequest {

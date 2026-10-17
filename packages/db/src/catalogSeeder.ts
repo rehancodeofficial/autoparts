@@ -102,7 +102,8 @@ export async function seedCatalogData() {
     await query(`
       INSERT INTO "VehicleMake" ("id", "name", "slug", "logoUrl", "description", "displayOrder", "isPublished", "isEnabled")
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      ON CONFLICT ("name") DO UPDATE SET "logoUrl" = EXCLUDED."logoUrl", "isPublished" = EXCLUDED."isPublished"
+      -- Same reasoning as products: never undo an admin edit on restart.
+      ON CONFLICT ("name") DO NOTHING
     `, [m.id, m.name, m.slug, m.logoUrl, m.description, m.displayOrder, m.isPublished, m.isEnabled]);
   }
 
@@ -243,7 +244,9 @@ export async function seedCatalogData() {
     await query(`
       INSERT INTO "Category" ("id", "nameEn", "nameAr", "slug", "descriptionEn", "imageUrl", "displayOrder", "isPublished")
       VALUES ($1, $2, $3, $4, $5, $6, $7, true)
-      ON CONFLICT ("slug") DO UPDATE SET "imageUrl" = EXCLUDED."imageUrl", "isPublished" = true
+      -- Forcing isPublished = true here un-hid every category an admin had
+      -- deliberately unpublished, on every server start.
+      ON CONFLICT ("slug") DO NOTHING
     `, [c.id, c.nameEn, c.nameAr, c.slug, c.descEn, c.imageUrl, c.order]);
   }
 
@@ -503,10 +506,11 @@ export async function seedCatalogData() {
         $16, $17, $18, $19,
         $20, $21, $22, $23, $24
       )
-      ON CONFLICT ("sku") DO UPDATE SET
-        "sellingPrice" = EXCLUDED."sellingPrice",
-        "stockQuantity" = EXCLUDED."stockQuantity",
-        "status" = EXCLUDED."status"
+      -- Seed data must never overwrite a product an operator is running.
+      -- This previously reset "sellingPrice", "stockQuantity" and "status" to
+      -- the seed values on every server start, silently undoing stock sold
+      -- against real orders and any price the admin panel had set.
+      ON CONFLICT ("sku") DO NOTHING
     `, [
       p.id, p.sku, p.mpn, p.oemNumber, p.slug, p.nameEn, p.nameAr,
       p.shortDescriptionEn, p.shortDescriptionAr, p.categoryId, p.brandId,

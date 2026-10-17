@@ -83,6 +83,7 @@ export const CategoryAndBrandManager: React.FC<CategoryAndBrandManagerProps> = (
       const url = editingCat ? `/api/admin/categories/${editingCat.id}` : '/api/admin/categories';
       const method = editingCat ? 'PUT' : 'POST';
       const res = await fetch(url, {
+        credentials: 'include',
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -139,6 +140,7 @@ export const CategoryAndBrandManager: React.FC<CategoryAndBrandManagerProps> = (
       const url = editingBrand ? `/api/admin/brands/${editingBrand.id}` : '/api/admin/brands';
       const method = editingBrand ? 'PUT' : 'POST';
       const res = await fetch(url, {
+        credentials: 'include',
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -173,7 +175,7 @@ export const CategoryAndBrandManager: React.FC<CategoryAndBrandManagerProps> = (
   const handleDeleteBrand = async (id: string, name: string) => {
     if (!window.confirm(`Delete brand "${name}"? This cannot be undone.`)) return;
     try {
-      const res = await fetch(`/api/admin/brands/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/brands/${id}`, { method: 'DELETE', credentials: 'include' });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Failed to delete brand');
@@ -187,7 +189,7 @@ export const CategoryAndBrandManager: React.FC<CategoryAndBrandManagerProps> = (
   const handleDeleteCategory = async (id: string, name: string) => {
     if (!window.confirm(`Delete category "${name}"? This cannot be undone.`)) return;
     try {
-      const res = await fetch(`/api/admin/categories/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/categories/${id}`, { method: 'DELETE', credentials: 'include' });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Failed to delete category');
@@ -213,6 +215,7 @@ export const CategoryAndBrandManager: React.FC<CategoryAndBrandManagerProps> = (
     setSaving(true);
     try {
       const res = await fetch(`/api/admin/quality-grades/${editingGrade.code}`, {
+        credentials: 'include',
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -323,7 +326,7 @@ export const CategoryAndBrandManager: React.FC<CategoryAndBrandManagerProps> = (
                           onClick={async () => {
                             if (window.confirm(`Delete category "${c.nameEn}"?`)) {
                               try {
-                                const res = await fetch(`/api/admin/categories/${c.id}`, { method: 'DELETE' });
+                                const res = await fetch(`/api/admin/categories/${c.id}`, { method: 'DELETE', credentials: 'include' });
                                 if (res.ok) {
                                   onRefresh();
                                 } else {

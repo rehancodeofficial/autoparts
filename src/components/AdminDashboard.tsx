@@ -9,6 +9,9 @@ import {
 } from 'lucide-react';
 import { VehicleManufacturerManager } from './VehicleManufacturerManager';
 import { CategoryAndBrandManager } from './CategoryAndBrandManager';
+import { AdminOrdersPanel } from './AdminOrdersPanel';
+import { AdminDiscountsPanel } from './AdminDiscountsPanel';
+import { apiPatch, apiPut, apiDelete, ApiError } from '../utils/api';
 
 interface AdminDashboardProps {
   parts: Part[];
@@ -21,7 +24,6 @@ interface AdminDashboardProps {
   onAddPart: (part: Part) => void;
   onUpdatePart?: (part: Part) => void;
   onDeletePart?: (partId: string) => void;
-  onUpdateOrderStatus: (orderId: string, status: Order['deliveryStatus']) => void;
   onRefreshAllData: () => void;
   onLogout?: () => void;
   lang: 'en' | 'ar';
@@ -38,12 +40,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onAddPart,
   onUpdatePart,
   onDeletePart,
-  onUpdateOrderStatus,
   onRefreshAllData,
   onLogout,
   lang
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'deals' | 'featured' | 'orders' | 'makes' | 'taxonomy'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'inventory' | 'deals' | 'featured' | 'orders' | 'discounts' | 'makes' | 'taxonomy'>('overview');
   
   // Search & Filters in Inventory Tab
   const [searchQuery, setSearchQuery] = useState('');
@@ -78,6 +79,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     dealBadge: '15% OFF',
     dealEndDate: ''
   });
+
+  // Surfaces a save that the server rejected. Stock, deal and featured edits
+  // used to update React state only, so a change that never reached the
+  // database still appeared to have worked until the page was reloaded.
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  /** Persists a product change, then reloads from the database. */
+  const persistProduct = async (
+    part: Part,
+    changes: Record<string, any>,
+    describe: string
+  ): Promise<boolean> => {
+    setSaveError(null);
+    try {
+      await apiPut(`/api/admin/products/${part.id}`, {
+        sku: part.sku,
+        slug: part.slug,
+        nameEn: part.nameEn,
+        nameAr: part.nameAr,
+        categoryId: part.categoryId,
+        brandId: part.brandId,
+        sellingPrice: part.originalPrice ?? part.price,
+        stockQuantity: part.stock,
+        status: part.status || 'PUBLISHED',
+        ...changes,
+      });
+      onRefreshAllData();
+      return true;
+    } catch (err) {
+      setSaveError(`${describe} could not be saved: ${(err as ApiError).message}`);
+      return false;
+    }
+  };
 
   // Modal State for Quick Stock Adjust
   const [stockAdjustModal, setStockAdjustModal] = useState<{ isOpen: boolean; part: Part | null; quantity: number }>({
@@ -268,28 +302,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   // Toggle Featured status directly
-  const handleToggleFeatured = (part: Part) => {
-    const isFeat = !(part as any).isFeatured;
-    const updated = { ...part, isFeatured: isFeat };
-    if (onUpdatePart) {
-      onUpdatePart(updated);
-    }
+  const handleToggleFeatured = async (part: Part) => {
+    await persistProduct(
+      part,
+      { isFeatured: !part.isFeatured },
+      `The featured flag for "${part.nameEn}"`
+    );
   };
 
-  // Quick Stock Update submit
-  const handleSaveStock = (e: React.FormEvent) => {
+  // Quick Stock Update submit. Goes through the inventory endpoint so the
+  // change is recorded as an InventoryMovement with the acting admin.
+  const handleSaveStock = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stockAdjustModal.part) return;
-    const newStock = Math.max(0, Number(stockAdjustModal.quantity));
-    const updated = { ...stockAdjustModal.part, stock: newStock };
-    if (onUpdatePart) {
-      onUpdatePart(updated);
+    const part = stockAdjustModal.part;
+    if (!part) return;
+
+    const newStock = Math.floor(Number(stockAdjustModal.quantity));
+    if (!Number.isFinite(newStock) || newStock < 0) {
+      setSaveError('Stock must be a whole number of 0 or more.');
+      return;
     }
-    setStockAdjustModal({ isOpen: false, part: null, quantity: 0 });
+
+    setSaveError(null);
+    try {
+      await apiPatch(`/api/admin/products/${part.id}/stock`, {
+        stockQuantity: newStock,
+        note: `Adjusted from the inventory table (was ${part.stock})`,
+      });
+      setStockAdjustModal({ isOpen: false, part: null, quantity: 0 });
+      onRefreshAllData();
+    } catch (err) {
+      setSaveError(`Stock for "${part.nameEn}" could not be saved: ${(err as ApiError).message}`);
+    }
   };
 
   // Quick Deal/Discount Update submit
-  const handleSaveDeal = (e: React.FormEvent) => {
+  const handleSaveDeal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!dealModal.part) return;
     
@@ -297,19 +345,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const salePrice = Number(dealModal.salePrice) || dealModal.part.price;
     const isDealActive = salePrice < originalPrice;
 
-    const updated = {
-      ...dealModal.part,
-      price: salePrice,
-      originalPrice: isDealActive ? originalPrice : undefined,
-      isDeal: isDealActive,
-      dealBadge: dealModal.dealBadge,
-      isFeatured: dealModal.isFeatured
-    };
-
-    if (onUpdatePart) {
-      onUpdatePart(updated);
+    if (salePrice < 0 || originalPrice < 0) {
+      setSaveError('Prices cannot be negative.');
+      return;
     }
-    setDealModal({ isOpen: false, part: null, salePrice: 0, originalPrice: 0, discountPercent: 0, dealBadge: '', isFeatured: false });
+
+    // `sellingPrice` is the list price and `salePrice` the promotional one, so
+    // the storefront and the checkout both derive the same figure.
+    const ok = await persistProduct(
+      dealModal.part,
+      {
+        sellingPrice: originalPrice,
+        salePrice: isDealActive ? salePrice : null,
+        isFeatured: dealModal.isFeatured,
+      },
+      `The deal for "${dealModal.part.nameEn}"`
+    );
+
+    if (ok) {
+      setDealModal({ isOpen: false, part: null, salePrice: 0, originalPrice: 0, discountPercent: 0, dealBadge: '', isFeatured: false });
+    }
   };
 
   // Navigation Items for Side Panel
@@ -319,6 +374,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     { id: 'deals', label: 'Deals & Clearance', icon: <Flame size={18} />, badge: stats.dealsCount },
     { id: 'featured', label: 'Featured Showcase', icon: <Sparkles size={18} />, badge: stats.featuredCount },
     { id: 'orders', label: 'Orders & Fulfillment', icon: <ShoppingBag size={18} />, badge: orders.length },
+    { id: 'discounts', label: 'Discount Codes', icon: <Percent size={18} />, badge: null },
     { id: 'makes', label: 'Vehicle Makes', icon: <Car size={18} />, badge: makes.length },
     { id: 'taxonomy', label: 'Categories & Brands', icon: <Layers size={18} />, badge: null }
   ];
@@ -529,6 +585,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {activeTab === 'deals' && 'Flash Deals, Discounts & Clearance'}
               {activeTab === 'featured' && 'Featured Section Promotion Manager'}
               {activeTab === 'orders' && 'Customer Orders & Shipments'}
+              {activeTab === 'discounts' && 'Discount Codes & Promotions'}
               {activeTab === 'makes' && 'Vehicle Manufacturers Management'}
               {activeTab === 'taxonomy' && 'Product Categories & Brand Directory'}
             </h1>
@@ -697,6 +754,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         {/* TAB 1: OVERVIEW */}
+        {/* A save the server rejected is shown here instead of silently
+            leaving the table looking up to date. */}
+        {saveError && (
+          <div style={{
+            marginBottom: '18px',
+            padding: '13px 16px',
+            borderRadius: '10px',
+            backgroundColor: '#FEF2F2',
+            border: '1px solid #FECACA',
+            color: '#B91C1C',
+            fontSize: '13px',
+            fontWeight: 700,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '12px',
+          }}>
+            <span>
+              <AlertCircle size={15} style={{ verticalAlign: '-3px', marginRight: '7px' }} />
+              {saveError}
+            </span>
+            <button
+              onClick={() => setSaveError(null)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#B91C1C' }}
+              aria-label="Dismiss"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
         {activeTab === 'overview' && (
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -1225,9 +1313,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                               {onDeletePart && (
                                 <button
-                                  onClick={() => {
-                                    if (window.confirm(`Delete product "${part.nameEn}"?`)) {
+                                  onClick={async () => {
+                                    if (!window.confirm(
+                                      `Delete product "${part.nameEn}" (SKU ${part.sku})?\n\n` +
+                                      'This cannot be undone. Products that appear on past orders ' +
+                                      'should be set to DISABLED instead so order history stays intact.'
+                                    )) return;
+                                    setSaveError(null);
+                                    try {
+                                      await apiDelete(`/api/admin/products/${part.id}`);
                                       onDeletePart(part.id);
+                                      onRefreshAllData();
+                                    } catch (err) {
+                                      setSaveError(
+                                        `"${part.nameEn}" could not be deleted: ${(err as ApiError).message}`
+                                      );
                                     }
                                   }}
                                   style={{
@@ -1484,57 +1584,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* TAB 5: ORDERS */}
         {activeTab === 'orders' && (
-          <div style={{ backgroundColor: '#ffffff', borderRadius: '14px', padding: '24px', border: '1px solid #E5E7EB', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-            <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#111827', margin: '0 0 16px 0' }}>
-              Customer Orders & Shipments
-            </h2>
-            {orders.length === 0 ? (
-              <div style={{ padding: '40px', textAlign: 'center', color: '#9CA3AF' }}>
-                <ShoppingBag size={36} style={{ margin: '0 auto 8px auto', display: 'block', color: '#D1D5DB' }} />
-                <div style={{ fontWeight: 700, color: '#374151' }}>No Customer Orders Yet</div>
-                <div style={{ fontSize: '12px' }}>Incoming orders will be listed here for fulfillment.</div>
-              </div>
-            ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB', color: '#6B7280', fontSize: '11px', textTransform: 'uppercase' }}>
-                    <th style={{ padding: '12px 14px' }}>Order ID</th>
-                    <th style={{ padding: '12px 14px' }}>Customer</th>
-                    <th style={{ padding: '12px 14px' }}>Total (SAR)</th>
-                    <th style={{ padding: '12px 14px' }}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.map(order => (
-                    <tr key={order.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
-                      <td style={{ padding: '12px 14px', fontWeight: 700 }}>#{order.id.slice(-6)}</td>
-                      <td style={{ padding: '12px 14px' }}>{order.customerName}</td>
-                      <td style={{ padding: '12px 14px', fontWeight: 800, color: '#E53935' }}>{order.total} SAR</td>
-                      <td style={{ padding: '12px 14px' }}>
-                        <select
-                          value={order.deliveryStatus}
-                          onChange={(e) => onUpdateOrderStatus(order.id, e.target.value as any)}
-                          style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #D1D5DB' }}
-                        >
-                          <option value="Processing">Processing</option>
-                          <option value="Shipped">Shipped</option>
-                          <option value="Delivered">Delivered</option>
-                          <option value="Cancelled">Cancelled</option>
-                        </select>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+          <AdminOrdersPanel lang={lang} onDataChanged={onRefreshAllData} />
+        )}
+
+        {activeTab === 'discounts' && (
+          <AdminDiscountsPanel lang={lang} />
         )}
 
         {/* TAB 6: VEHICLE MAKES */}
         {activeTab === 'makes' && (
           <VehicleManufacturerManager
             makes={makes}
-            onRefreshMakes={onRefreshAllData}
+            onRefresh={onRefreshAllData}
             lang={lang}
           />
         )}

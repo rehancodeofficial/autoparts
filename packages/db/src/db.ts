@@ -20,43 +20,58 @@ try {
 
 let pool: Pool | null = null;
 
+/**
+ * Resolves the PostgreSQL connection string.
+ *
+ * Previously this treated "SUPABASE_URL is set" as "we are in production" and,
+ * whenever DATABASE_URL pointed at localhost, replaced it with a *guessed*
+ * Supabase pooler URL — using SUPABASE_SERVICE_ROLE_KEY as the database
+ * password. That key is a JWT, not a database credential, so the override
+ * could only ever fail, and it silently discarded a working local connection
+ * on any machine that had both set.
+ *
+ * An explicitly configured DATABASE_URL is now always honoured. The pooler URL
+ * is only assembled when DATABASE_URL is absent altogether, and only from
+ * SUPABASE_DB_PASSWORD — never from the service-role key.
+ */
+export function resolveConnectionString(): string {
+  const explicit = (process.env.DATABASE_URL || '').trim();
+  if (explicit) return explicit;
+
+  const supabaseUrl = (process.env.SUPABASE_URL || '').trim();
+  const dbPassword = (process.env.SUPABASE_DB_PASSWORD || '').trim();
+
+  if (supabaseUrl && dbPassword) {
+    const ref = supabaseUrl.replace('https://', '').replace('.supabase.co', '');
+    const region = process.env.SUPABASE_POOLER_REGION || 'ap-northeast-1';
+    console.log(`[DB] DATABASE_URL is not set; using the Supabase pooler for project ${ref}.`);
+    return `postgresql://postgres.${ref}:${encodeURIComponent(dbPassword)}@aws-0-${region}.pooler.supabase.com:6543/postgres`;
+  }
+
+  if (supabaseUrl) {
+    console.error(
+      '[DB] SUPABASE_URL is set but DATABASE_URL is not. Set DATABASE_URL to your ' +
+      'Supabase Transaction Pooler connection string (Dashboard -> Project Settings -> ' +
+      'Database -> Connection string -> Transaction pooler), or set SUPABASE_DB_PASSWORD. ' +
+      'The service-role key is not a database password.'
+    );
+  }
+
+  return 'postgresql://autopart_user:autopart_password@localhost:5432/autopart_db';
+}
+
 export function getDatabasePool(): Pool {
   if (!pool) {
-    let connectionString = process.env.DATABASE_URL || 'postgresql://autopart_user:autopart_password@localhost:5432/autopart_db';
+    const connectionString = resolveConnectionString();
 
-    // Guard: if DATABASE_URL points to localhost but a cloud DB is configured,
-    // use the Supabase pooler as fallback. We check for SUPABASE_URL (set by
-    // Vercel env vars) rather than relying solely on NODE_ENV, because Vercel
-    // does NOT automatically set NODE_ENV=production unless you add it yourself.
-    const isLocalhost = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
-    const hasSupabaseConfig = !!(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
-    const isProduction = process.env.NODE_ENV === 'production' || hasSupabaseConfig;
-
-    if (isLocalhost && isProduction) {
-      console.error(
-        '[DB] DATABASE_URL is pointing to localhost but SUPABASE_URL is configured. ' +
-        'Set DATABASE_URL to your Supabase Transaction Pooler connection string in Vercel env vars. ' +
-        'Example: postgresql://postgres.REF:DB_PASSWORD@aws-0-REGION.pooler.supabase.com:6543/postgres'
-      );
-      // Last-resort fallback: build the Supabase pooler URL from env vars.
-      // NOTE: The password here must be your Supabase DATABASE password (not the service role JWT).
-      // Set SUPABASE_DB_PASSWORD in Vercel env vars, or better: just set DATABASE_URL directly.
-      const supabaseUrl = process.env.SUPABASE_URL || '';
-      const supabaseRef = supabaseUrl.replace('https://', '').replace('.supabase.co', '');
-      const dbPassword = process.env.SUPABASE_DB_PASSWORD || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-      const poolerRegion = process.env.SUPABASE_POOLER_REGION || 'ap-northeast-1';
-      if (supabaseRef && dbPassword) {
-        connectionString = `postgresql://postgres.${supabaseRef}:${encodeURIComponent(dbPassword)}@aws-0-${poolerRegion}.pooler.supabase.com:6543/postgres`;
-        console.log(`[DB] Using Supabase pooler fallback connection (region: aws-0-${poolerRegion}).`);
-      }
-    }
-    
     // Enable SSL for any remote database (Supabase, AWS RDS, etc.)
-    const isRemoteDb = !connectionString.includes('localhost') && !connectionString.includes('127.0.0.1');
+    const isRemoteDb =
+      !connectionString.includes('localhost') && !connectionString.includes('127.0.0.1');
 
     pool = new Pool({
       connectionString,
-      // In serverless (Vercel), keep pool small — each Lambda invocation is independent
+      // In serverless (Vercel), keep the pool small — each invocation is its
+      // own container.
       max: isRemoteDb ? 3 : 20,
       idleTimeoutMillis: 10000,
       connectionTimeoutMillis: 10000,

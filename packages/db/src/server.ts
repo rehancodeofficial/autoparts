@@ -1,3 +1,11 @@
+// Load .env before anything reads process.env.
+//
+// Nothing in the server did this, so every value in .env — DATABASE_URL,
+// SUPABASE_*, JWT_*, the payment and store settings — was silently ignored in
+// local development, and the app ran only because db.ts falls back to a
+// hardcoded localhost connection string. On Vercel there is no .env file and
+// the platform injects the variables, where this call is a harmless no-op.
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -23,7 +31,15 @@ export function createApp() {
     origin: true,
     credentials: true,
   }));
-  app.use(express.json());
+  // Keep the untouched request bytes: payment webhook signatures are computed
+  // over the exact body the provider sent, and re-serialising a parsed object
+  // changes key order and whitespace, which breaks every HMAC check.
+  app.use(express.json({
+    limit: '1mb',
+    verify: (req, _res, buf) => {
+      (req as any).rawBody = buf.toString('utf8');
+    },
+  }));
   app.use(cookieParser());
 
   // Health check endpoint for Docker & Kubernetes
@@ -60,6 +76,11 @@ export async function startServer(port: number = 4000) {
     const { seedCatalogData } = await import('./catalogSeeder');
     await seedCatalogData().catch(e => {
       console.warn('Catalog seeder notice:', e.message);
+    });
+    // The admin panel cannot authenticate without a real administrator row.
+    const { ensureAdminUser } = await import('./adminBootstrap');
+    await ensureAdminUser().catch(e => {
+      console.warn('Admin bootstrap notice:', e.message);
     });
   } catch (err) {
     console.error('Migration error:', err);

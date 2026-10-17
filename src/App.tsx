@@ -17,16 +17,95 @@ import { ContactUsPage } from './components/ContactUsPage';
 import { LegalPage } from './components/LegalPage';
 import { AdminLoginPage } from './components/AdminLoginPage';
 import { useAuth } from './context/AuthContext';
+import { OrderConfirmationPage } from './components/OrderConfirmationPage';
+import { apiGet, apiPost } from './utils/api';
+import { mapApiProductsToParts } from './utils/productMapper';
 import {
   Search, ShoppingCart, Phone, MessageSquare, ChevronRight, ChevronLeft,
   Car, ShieldCheck, Truck, RefreshCw, Headphones, Check, ArrowRight,
   User as UserIcon, LogIn, UserPlus, LogOut, Package, MapPin, X, Flame, Sparkles, Menu, ChevronDown
 } from 'lucide-react';
 
+/**
+ * Shown only when the catalogue API cannot be reached, so a backend outage
+ * degrades to a visibly stale shelf rather than an empty page. The live
+ * catalogue comes from /api/products, and checkout re-reads every price and
+ * product from the database, so nothing here can ever be sold at these
+ * numbers.
+ */
+const FALLBACK_PARTS: Part[] = [
+  {
+    id: 'test-part-01',
+    sku: 'BRK-BREM-GT6',
+    oemNumber: '1N1.9008A',
+    alternateNumbers: ['BREM-GT6-RED'],
+    nameEn: 'Brembo GT-R 6-Piston Big Brake Kit',
+    nameAr: 'طقم فرامل بريمبو جي تي-آر 6 مكابس عالي الأداء',
+    category: 'Braking Systems',
+    categorySlug: 'brakes',
+    brand: 'Brembo Racing',
+    condition: 'Genuine Original',
+    qualityGrade: 'GRADE_A',
+    price: 3499.00,
+    originalPrice: 4200.00,
+    stock: 12,
+    warehouseLocation: 'Riyadh Central Distribution Hub',
+    rating: 5.0,
+    reviewCount: 24,
+    images: [
+      'https://images.unsplash.com/photo-1600790142055-619df03207e6?auto=format&fit=crop&w=800&q=80'
+    ],
+    descriptionEn: 'High-performance forged monobloc 6-piston caliper big brake kit engineered for extreme desert heat and track braking.',
+    descriptionAr: 'طقم فرامل رياضي عالي التحمل مخصص لأقسى الظروف ودرجات الحرارة العالية.',
+    specifications: { 'Origin': 'Italy', 'Rotor': '380mm Floating Slotted' },
+    fitments: [
+      { make: 'Toyota', model: 'Land Cruiser (LC300)', years: [2021, 2022, 2023, 2024, 2025, 2026] }
+    ],
+    warranty: '24 Months Official Warranty',
+    deliveryDays: 'Same-day Riyadh, 24-48h KSA',
+    isFeatured: true,
+    isDeal: true,
+    dealBadge: '17% OFF'
+  } as any,
+  {
+    id: 'test-part-02',
+    sku: 'FIL-DENSO-OEM',
+    oemNumber: '87139-02090',
+    alternateNumbers: ['CF-10285'],
+    nameEn: 'Denso Activated Carbon OEM Cabin Filter',
+    nameAr: 'فلتر مكيف هواء الكابينة مع الكربون المنشط من دينسو',
+    category: 'Filters & Intake',
+    categorySlug: 'filters',
+    brand: 'Denso OEM',
+    condition: 'Genuine Original',
+    qualityGrade: 'GRADE_A',
+    price: 115.00,
+    originalPrice: 145.00,
+    stock: 35,
+    warehouseLocation: 'Jeddah Regional Logistics Center',
+    rating: 4.9,
+    reviewCount: 42,
+    images: [
+      'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=800&q=80'
+    ],
+    descriptionEn: 'Original equipment multi-layer pollen and PM2.5 micro-filter element with activated carbon deodorizing granules.',
+    descriptionAr: 'فلتر كابينة أصلي متعدد الطبقات لعزل الأتربة وحبوب اللقاح والغبار مع حبيبات كربون نشط.',
+    specifications: { 'Origin': 'Japan', 'Type': 'PM2.5 Activated Carbon' },
+    fitments: [
+      { make: 'Toyota', model: 'Camry', years: [2018, 2019, 2020, 2021, 2022, 2023, 2024] },
+      { make: 'Lexus', model: 'ES350', years: [2019, 2020, 2021, 2022, 2023, 2024] }
+    ],
+    warranty: '12 Months Official Warranty',
+    deliveryDays: 'Same-day Riyadh, 24-48h KSA',
+    isFeatured: true,
+    isDeal: false
+  } as any
+];
+
 export function App() {
   const { user, logout } = useAuth();
   const [lang, setLang] = useState<'en' | 'ar'>('en');
-  const [view, setView] = useState<'store' | 'admin' | 'admin-login' | 'login' | 'signup' | 'account' | '404' | 'product' | 'about' | 'contact' | 'terms' | 'privacy' | 'cookies'>('store');
+  const [view, setView] = useState<'store' | 'admin' | 'admin-login' | 'login' | 'signup' | 'account' | '404' | 'product' | 'about' | 'contact' | 'terms' | 'privacy' | 'cookies' | 'order-confirmation' | 'order-tracking'>('store');
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
     return sessionStorage.getItem('autoparts_admin_authenticated') === 'true';
   });
@@ -38,76 +117,106 @@ export function App() {
   const navbarRef = useRef<HTMLDivElement>(null);
   const [navbarBottom, setNavbarBottom] = useState(93);
 
-  // Initial 2 test products for testing
-  const [parts, setParts] = useState<Part[]>([
-    {
-      id: 'test-part-01',
-      sku: 'BRK-BREM-GT6',
-      oemNumber: '1N1.9008A',
-      alternateNumbers: ['BREM-GT6-RED'],
-      nameEn: 'Brembo GT-R 6-Piston Big Brake Kit',
-      nameAr: 'طقم فرامل بريمبو جي تي-آر 6 مكابس عالي الأداء',
-      category: 'Braking Systems',
-      categorySlug: 'brakes',
-      brand: 'Brembo Racing',
-      condition: 'Genuine Original',
-      qualityGrade: 'GRADE_A',
-      price: 3499.00,
-      originalPrice: 4200.00,
-      stock: 12,
-      warehouseLocation: 'Riyadh Central Distribution Hub',
-      rating: 5.0,
-      reviewCount: 24,
-      images: [
-        'https://images.unsplash.com/photo-1600790142055-619df03207e6?auto=format&fit=crop&w=800&q=80'
-      ],
-      descriptionEn: 'High-performance forged monobloc 6-piston caliper big brake kit engineered for extreme desert heat and track braking.',
-      descriptionAr: 'طقم فرامل رياضي عالي التحمل مخصص لأقسى الظروف ودرجات الحرارة العالية.',
-      specifications: { 'Origin': 'Italy', 'Rotor': '380mm Floating Slotted' },
-      fitments: [
-        { make: 'Toyota', model: 'Land Cruiser (LC300)', years: [2021, 2022, 2023, 2024, 2025, 2026] }
-      ],
-      warranty: '24 Months Official Warranty',
-      deliveryDays: 'Same-day Riyadh, 24-48h KSA',
-      isFeatured: true,
-      isDeal: true,
-      dealBadge: '17% OFF'
-    } as any,
-    {
-      id: 'test-part-02',
-      sku: 'FIL-DENSO-OEM',
-      oemNumber: '87139-02090',
-      alternateNumbers: ['CF-10285'],
-      nameEn: 'Denso Activated Carbon OEM Cabin Filter',
-      nameAr: 'فلتر مكيف هواء الكابينة مع الكربون المنشط من دينسو',
-      category: 'Filters & Intake',
-      categorySlug: 'filters',
-      brand: 'Denso OEM',
-      condition: 'Genuine Original',
-      qualityGrade: 'GRADE_A',
-      price: 115.00,
-      originalPrice: 145.00,
-      stock: 35,
-      warehouseLocation: 'Jeddah Regional Logistics Center',
-      rating: 4.9,
-      reviewCount: 42,
-      images: [
-        'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=800&q=80'
-      ],
-      descriptionEn: 'Original equipment multi-layer pollen and PM2.5 micro-filter element with activated carbon deodorizing granules.',
-      descriptionAr: 'فلتر كابينة أصلي متعدد الطبقات لعزل الأتربة وحبوب اللقاح والغبار مع حبيبات كربون نشط.',
-      specifications: { 'Origin': 'Japan', 'Type': 'PM2.5 Activated Carbon' },
-      fitments: [
-        { make: 'Toyota', model: 'Camry', years: [2018, 2019, 2020, 2021, 2022, 2023, 2024] },
-        { make: 'Lexus', model: 'ES350', years: [2019, 2020, 2021, 2022, 2023, 2024] }
-      ],
-      warranty: '12 Months Official Warranty',
-      deliveryDays: 'Same-day Riyadh, 24-48h KSA',
-      isFeatured: true,
-      isDeal: false
-    } as any
-  ]);
+  // The catalogue is loaded from the database by loadCatalogue() below.
+  const [parts, setParts] = useState<Part[]>([]);
+  const [catalogueState, setCatalogueState] =
+    useState<'loading' | 'live' | 'fallback'>('loading');
   const [orders, setOrders] = useState<Order[]>([]);
+
+  // Reference data for the admin panel. These were previously passed as
+  // hardcoded empty arrays, so the manufacturer, category and brand managers
+  // always rendered empty and onRefreshAllData did nothing.
+  const [makes, setMakes] = useState<VehicleMake[]>([]);
+  const [categories, setCategories] = useState<PartCategory[]>([]);
+  const [brands, setBrands] = useState<PartBrand[]>([]);
+  const [qualityGrades, setQualityGrades] = useState<QualityGradeConfig[]>([]);
+
+  /**
+   * Loads the published catalogue. Product edits made in the admin panel show
+   * up on the storefront through this call.
+   */
+  const loadCatalogue = useCallback(async () => {
+    try {
+      const result = await apiGet<{ products: any[] }>('/api/products?limit=200');
+      const mapped = mapApiProductsToParts(result.products || []);
+      if (mapped.length > 0) {
+        setParts(mapped);
+        setCatalogueState('live');
+      } else {
+        // An empty but reachable catalogue is a real state, not an error.
+        setParts([]);
+        setCatalogueState('live');
+      }
+    } catch (err) {
+      console.error('[catalogue] Could not load products from the API:', err);
+      setParts(FALLBACK_PARTS);
+      setCatalogueState('fallback');
+    }
+  }, []);
+
+  /** Reference data and orders for the admin panel. */
+  const loadAdminData = useCallback(async () => {
+    const results = await Promise.allSettled([
+      apiGet<any[]>('/api/admin/makes'),
+      apiGet<any[]>('/api/admin/categories'),
+      apiGet<any[]>('/api/admin/brands'),
+      apiGet<any[]>('/api/admin/quality-grades'),
+      apiGet<any[]>('/api/admin/products'),
+      apiGet<{ orders: Order[] }>('/api/admin/orders?limit=200'),
+    ]);
+
+    const [m, c, b, g, prods, ords] = results;
+    if (m.status === 'fulfilled') setMakes(m.value || []);
+    if (c.status === 'fulfilled') setCategories(c.value || []);
+    if (b.status === 'fulfilled') setBrands(b.value || []);
+    if (g.status === 'fulfilled') setQualityGrades(g.value || []);
+    // The admin inventory table needs drafts and disabled products too, which
+    // the public /api/products endpoint deliberately hides.
+    if (prods.status === 'fulfilled') {
+      setParts(mapApiProductsToParts(prods.value || []));
+      setCatalogueState('live');
+    }
+    if (ords.status === 'fulfilled') setOrders(ords.value.orders || []);
+
+    const failed = results.filter(r => r.status === 'rejected');
+    if (failed.length > 0) {
+      console.error('[admin] Some admin data could not be loaded:', failed);
+    }
+  }, []);
+
+  const handleRefreshAllData = useCallback(async () => {
+    await Promise.all([loadCatalogue(), loadAdminData()]);
+  }, [loadCatalogue, loadAdminData]);
+
+  // Storefront catalogue on first paint.
+  useEffect(() => {
+    loadCatalogue();
+  }, [loadCatalogue]);
+
+  /**
+   * Confirms the admin session with the server rather than trusting the
+   * sessionStorage flag the old client-only login wrote. A stale flag now
+   * sends the operator back to the sign-in screen instead of showing an
+   * admin panel whose every request fails with 401.
+   */
+  useEffect(() => {
+    if (view !== 'admin') return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await apiGet('/api/admin/session');
+        if (cancelled) return;
+        setIsAdminLoggedIn(true);
+        await loadAdminData();
+      } catch {
+        if (cancelled) return;
+        sessionStorage.removeItem('autoparts_admin_authenticated');
+        setIsAdminLoggedIn(false);
+        setView('admin-login');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [view, loadAdminData]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [activePart, setActivePart] = useState<Part | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -219,6 +328,12 @@ export function App() {
         }
       } else if (path === '/admin/login' || hash === '#/admin/login') {
         setView('admin-login');
+      } else if (path === '/order/confirmation' || path === '/order/confirm') {
+        // Where the payment provider returns the shopper.
+        setView('order-confirmation');
+      } else if (path.startsWith('/track') || path.startsWith('/order/track')) {
+        // Login-free order tracking from the saved link.
+        setView('order-tracking');
       }
     };
 
@@ -244,11 +359,14 @@ export function App() {
   // Update browser URL when view changes to/from admin
   const handleNavigateView = (newView: typeof view) => {
     setView(newView);
-    if (newView === 'admin') {
+    const path = window.location.pathname.toLowerCase();
+    if (newView === 'admin' || newView === 'admin-login') {
       window.history.pushState({}, '', '/admin');
-    } else if (newView === 'admin-login') {
-      window.history.pushState({}, '', '/admin');
-    } else if (window.location.pathname.toLowerCase().startsWith('/admin')) {
+    } else if (
+      path.startsWith('/admin') ||
+      path.startsWith('/order') ||
+      path.startsWith('/track')
+    ) {
       window.history.pushState({}, '', '/');
     }
   };
@@ -261,6 +379,22 @@ export function App() {
           ========================================================================= */}
 
       {/* Top micro bar removed per user request */}
+
+      {catalogueState === 'fallback' && view !== 'admin' && view !== 'admin-login' && (
+        <div style={{
+          backgroundColor: '#FFFBEB',
+          borderBottom: '1px solid #FDE68A',
+          color: '#92400E',
+          fontSize: '12px',
+          fontWeight: 600,
+          padding: '9px 16px',
+          textAlign: 'center',
+        }}>
+          {lang === 'ar'
+            ? 'نعرض منتجات محفوظة مؤقتًا — كتالوج المتجر غير متاح حاليًا. قد تكون الأسعار والتوفر غير محدثة.'
+            : 'Showing cached products — our live catalogue is temporarily unavailable, so prices and availability may be out of date.'}
+        </div>
+      )}
 
       {/* Main Header Bar (#1A1A1A Dark Surface) */}
       <div style={{
@@ -1062,15 +1196,14 @@ export function App() {
             parts={parts}
             orders={orders}
             partRequests={[]}
-            makes={[]}
-            categories={[]}
-            brands={[]}
-            qualityGrades={[]}
+            makes={makes}
+            categories={categories}
+            brands={brands}
+            qualityGrades={qualityGrades}
             onAddPart={(p) => setParts(prev => [p, ...prev])}
             onUpdatePart={(p) => setParts(prev => prev.map(item => item.id === p.id ? p : item))}
             onDeletePart={(id) => setParts(prev => prev.filter(item => item.id !== id))}
-            onUpdateOrderStatus={(id, st) => setOrders(prev => prev.map(o => o.id === id ? { ...o, deliveryStatus: st } : o))}
-            onRefreshAllData={() => { }}
+            onRefreshAllData={handleRefreshAllData}
             onLogout={() => {
               setShowAdminLogoutConfirm(true);
               setPendingNavView('admin-login');
@@ -1087,6 +1220,15 @@ export function App() {
             onAddToCart={handleAddToCart}
           />
         </main>
+      ) : view === 'order-confirmation' || view === 'order-tracking' ? (
+        <OrderConfirmationPage
+          mode={view === 'order-confirmation' ? 'confirmation' : 'tracking'}
+          lang={lang}
+          onNavigateHome={() => {
+            handleNavigateView('store');
+            window.scrollTo(0, 0);
+          }}
+        />
       ) : view === 'about' ? (
         <AboutUsPage onNavigateHome={() => setView('store')} />
       ) : view === 'contact' ? (
@@ -2453,7 +2595,14 @@ export function App() {
               </button>
 
               <button
-                onClick={() => {
+                onClick={async () => {
+                  // Clearing the local flag is not enough: the httpOnly
+                  // session cookie would still authenticate admin requests.
+                  try {
+                    await apiPost('/api/admin/logout');
+                  } catch (err) {
+                    console.error('[admin] Server sign-out failed:', err);
+                  }
                   sessionStorage.removeItem('autoparts_admin_authenticated');
                   setIsAdminLoggedIn(false);
                   setShowAdminLogoutConfirm(false);

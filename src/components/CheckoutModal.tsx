@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CartItem, PaymentMethod, Order } from '../types';
-import { 
-  X, CheckCircle2, ChevronRight, HelpCircle, 
+import {
+  X, CheckCircle2, ChevronRight, HelpCircle,
   ArrowRight, ShieldCheck, Tag, ShoppingBag, Plus, Minus, Trash2
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { apiPost, ApiError } from '../utils/api';
 
 interface CheckoutModalProps {
   cart: CartItem[];
@@ -15,6 +15,19 @@ interface CheckoutModalProps {
   lang: 'en' | 'ar';
 }
 
+/** Server-priced quote for the current cart. */
+interface ServerQuote {
+  subtotal: number;
+  discount: number;
+  vat: number;
+  shipping: number;
+  total: number;
+  vatPercent: number;
+  currency: string;
+  discountCode: string | null;
+  discountError: string | null;
+}
+
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   cart,
   isOpen,
@@ -23,139 +36,257 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   onUpdateQuantity,
   lang
 }) => {
-  if (!isOpen) return null;
-
   const [step, setStep] = useState<'information' | 'shipping' | 'payment' | 'success'>('information');
-  
-  // Contact info
-  const [emailOrPhone, setEmailOrPhone] = useState('sultan.otaibi@gmail.com');
+
+  // Contact info. These fields used to ship pre-filled with one real
+  // person's name, email, phone and street address, which every shopper then
+  // saw as their own. They start empty; the examples live in the placeholders.
+  const [emailOrPhone, setEmailOrPhone] = useState('');
   const [newsOffers, setNewsOffers] = useState(true);
 
   // Shipping address fields
   const [country, setCountry] = useState('Saudi Arabia');
-  const [firstName, setFirstName] = useState('Sultan');
-  const [lastName, setLastName] = useState('Al-Otaibi');
-  const [address, setAddress] = useState('Anas Ibn Malik Rd, Al Malqa District');
-  const [city, setCity] = useState('Riyadh');
-  const [postalCode, setPostalCode] = useState('13524');
-  const [phone, setPhone] = useState('+966 50 123 4567');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [phone, setPhone] = useState('');
   const [saveInfo, setSaveInfo] = useState(true);
 
-  // Discount / Promo Code
+  // Discount / Promo Code — validated by the server, never in the browser.
   const [discountCode, setDiscountCode] = useState('');
-  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; percent: number } | null>(null);
+  const [appliedDiscount, setAppliedDiscount] = useState<
+    { code: string; percent: number; amount: number } | null
+  >(null);
   const [discountError, setDiscountError] = useState<string | null>(null);
+  const [isApplyingDiscount, setIsApplyingDiscount] = useState(false);
 
   // Payment method
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mada');
   const [isProcessing, setIsProcessing] = useState(false);
   const [placedOrder, setPlacedOrder] = useState<Order | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [fieldError, setFieldError] = useState<string | null>(null);
 
-  // Pricing calculations
-  const rawSubtotal = cart.reduce((acc, item) => acc + item.part.price * item.quantity, 0);
-  const discountAmount = appliedDiscount ? (rawSubtotal * appliedDiscount.percent) / 100 : 0;
+  // Authoritative pricing from the server.
+  const [quote, setQuote] = useState<ServerQuote | null>(null);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+
+  // One key per checkout attempt, so a double click or a retry after a
+  // timeout cannot create two orders.
+  const idempotencyKey = useRef<string>(
+    (globalThis.crypto?.randomUUID?.() ?? `ck-${Date.now()}-${Math.random()}`)
+  );
+
+  const cartSignature = cart
+    .map(item => `${item.part.id}:${item.quantity}`)
+    .join('|');
+
+  const serverItems = useCallback(
+    () => cart.map(item => ({ productId: item.part.id, quantity: item.quantity })),
+    [cart]
+  );
+
+  /**
+   * Fetches the authoritative quote whenever the cart or the applied code
+   * changes. The displayed figures are the server's, so what the shopper sees
+   * is exactly what will be charged.
+   */
+  useEffect(() => {
+    if (!isOpen || cart.length === 0) {
+      setQuote(null);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await apiPost<ServerQuote>('/api/checkout/quote', {
+          items: serverItems(),
+          discountCode: appliedDiscount?.code ?? null,
+          customerEmail: emailOrPhone.includes('@') ? emailOrPhone.trim() : undefined,
+        });
+        if (cancelled) return;
+        setQuote(result);
+        setQuoteError(null);
+        // A code can stop being valid between applying it and paying.
+        if (appliedDiscount && !result.discountCode) {
+          setAppliedDiscount(null);
+          setDiscountError(result.discountError || 'That discount code is no longer valid.');
+        }
+      } catch (err) {
+        if (cancelled) return;
+        const apiErr = err as ApiError;
+        setQuote(null);
+        setQuoteError(apiErr?.message || 'Could not price your cart.');
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [isOpen, cartSignature, appliedDiscount?.code, serverItems, emailOrPhone]);
+
+  // Figures shown in the summary. Before the first quote arrives they fall
+  // back to a local estimate purely so the panel is not blank; the order is
+  // always created from the server's own numbers.
+  const localSubtotal = cart.reduce((acc, item) => acc + item.part.price * item.quantity, 0);
+  const rawSubtotal = quote?.subtotal ?? localSubtotal;
+  const discountAmount = quote?.discount ?? 0;
   const subtotal = Math.max(0, rawSubtotal - discountAmount);
-  const vat = subtotal * 0.15;
-  const shippingCost = subtotal > 500 || subtotal === 0 ? 0 : 25;
-  const total = subtotal + vat + (subtotal === 0 ? 0 : shippingCost);
+  const vat = quote?.vat ?? subtotal * 0.15;
+  const shippingCost = quote?.shipping ?? (subtotal > 500 || subtotal === 0 ? 0 : 25);
+  const total = quote?.total ?? subtotal + vat + shippingCost;
+  const isPriced = quote !== null;
 
-  const handleApplyDiscount = () => {
+  const handleApplyDiscount = async () => {
     setDiscountError(null);
     const cleaned = discountCode.trim().toUpperCase();
     if (!cleaned) return;
+    if (cart.length === 0) {
+      setDiscountError('Add an item to your cart first.');
+      return;
+    }
 
-    if (cleaned === 'RONIN10' || cleaned === 'AUTOPARTS10') {
-      setAppliedDiscount({ code: cleaned, percent: 10 });
-    } else if (cleaned === 'DEAL15' || cleaned === 'VIP15') {
-      setAppliedDiscount({ code: cleaned, percent: 15 });
-    } else if (cleaned === 'SPECIAL20') {
-      setAppliedDiscount({ code: cleaned, percent: 20 });
-    } else {
-      setDiscountError(lang === 'ar' ? 'رمز القسيمة غير صالح' : 'Enter a valid discount code or gift card');
+    setIsApplyingDiscount(true);
+    try {
+      const result = await apiPost<{
+        code: string; type: string; value: number; amount: number;
+      }>('/api/checkout/discount', {
+        items: serverItems(),
+        code: cleaned,
+        customerEmail: emailOrPhone.includes('@') ? emailOrPhone.trim() : undefined,
+      });
+
+      setAppliedDiscount({
+        code: result.code,
+        percent: result.type === 'PERCENT' ? result.value : 0,
+        amount: result.amount,
+      });
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setAppliedDiscount(null);
+      setDiscountError(
+        apiErr?.body?.error ||
+        apiErr?.message ||
+        (lang === 'ar' ? 'رمز القسيمة غير صالح' : 'Enter a valid discount code or gift card')
+      );
+    } finally {
+      setIsApplyingDiscount(false);
     }
   };
 
+  /** Mirrors the server's validation so mistakes surface before the last step. */
+  const validateDetails = (): string | null => {
+    const email = emailOrPhone.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      return lang === 'ar'
+        ? 'الرجاء إدخال بريد إلكتروني صحيح'
+        : 'Please enter a valid email address so we can send your order confirmation.';
+    }
+    if (`${firstName} ${lastName}`.trim().length < 2) {
+      return lang === 'ar' ? 'الرجاء إدخال الاسم الكامل' : 'Please enter your full name.';
+    }
+    if (address.trim().length < 5) {
+      return lang === 'ar' ? 'الرجاء إدخال عنوان التوصيل' : 'Please enter your delivery address.';
+    }
+    if (city.trim().length < 2) {
+      return lang === 'ar' ? 'الرجاء إدخال المدينة' : 'Please enter your city.';
+    }
+    if (postalCode.trim() && !/^\d{5}$/.test(postalCode.trim())) {
+      return lang === 'ar' ? 'الرمز البريدي 5 أرقام' : 'Saudi postal codes are 5 digits.';
+    }
+    const digits = phone.replace(/[\s\-()]/g, '');
+    if (!/^(\+9665\d{8}|009665\d{8}|9665\d{8}|05\d{8}|5\d{8})$/.test(digits)) {
+      return lang === 'ar'
+        ? 'الرجاء إدخال رقم جوال سعودي صحيح'
+        : 'Please enter a valid Saudi mobile number, for example 0501234567.';
+    }
+    return null;
+  };
+
+  const handleContinueToShipping = () => {
+    const problem = validateDetails();
+    setFieldError(problem);
+    if (!problem) setStep('shipping');
+  };
+
+  /**
+   * Creates the order and hands the shopper to the payment provider.
+   *
+   * This previously caught every failure and fabricated a local order marked
+   * "Paid", complete with a random tracking number and confetti — so a dead
+   * API looked like a completed purchase. Failures are now reported.
+   */
   const handlePay = async () => {
+    const problem = validateDetails();
+    if (problem) {
+      setFieldError(problem);
+      setStep('information');
+      return;
+    }
+
     setIsProcessing(true);
     setServerError(null);
 
-    const fullName = `${firstName} ${lastName}`.trim() || 'Valued Customer';
-    const fullAddress = `${address}, ${city}, ${country}`;
-
     try {
-      const res = await fetch('/api/orders/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          customerName: fullName,
-          customerPhone: phone || emailOrPhone,
-          city,
-          address: fullAddress,
-          paymentMethod,
-          items: cart.map(it => ({
-            productId: it.part.id,
-            nameEn: it.part.nameEn,
-            nameAr: it.part.nameAr,
-            price: it.part.price,
-            quantity: it.quantity
-          }))
-        })
+      const result = await apiPost<{
+        order: Order & { trackingToken: string };
+        payment: { redirectUrl: string | null; isTestMode: boolean } | null;
+      }>('/api/checkout', {
+        customerName: `${firstName} ${lastName}`.trim(),
+        customerEmail: emailOrPhone.trim(),
+        customerPhone: phone.trim(),
+        address: address.trim(),
+        city: city.trim(),
+        postalCode: postalCode.trim() || null,
+        country,
+        paymentMethod,
+        discountCode: appliedDiscount?.code ?? null,
+        items: serverItems(),
+        idempotencyKey: idempotencyKey.current,
       });
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Checkout validation failed.');
+      // Keep the reference locally so the confirmation page still works if the
+      // provider drops the query string on the way back.
+      try {
+        sessionStorage.setItem(
+          'autoparts_last_order',
+          JSON.stringify({
+            orderNumber: result.order.orderNumber,
+            trackingToken: result.order.trackingToken,
+          })
+        );
+      } catch { /* private browsing */ }
+
+      if (result.payment?.redirectUrl) {
+        // Hand over to the provider. The order is PENDING_PAYMENT until the
+        // provider is verified server-side on the way back.
+        window.location.assign(result.payment.redirectUrl);
+        return;
       }
 
-      const { order } = await res.json();
-      setPlacedOrder(order);
+      // No redirect needed: show the order, still unpaid, and say so.
+      setPlacedOrder(result.order);
       setIsProcessing(false);
       setStep('success');
-      onOrderPlaced(order);
-
-      try {
-        confetti({
-          particleCount: 80,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
-      } catch (e) {}
-    } catch (err: any) {
-      // Fallback local order creation if backend endpoint isn't active
-      const fallbackOrder: Order = {
-        id: `ord-${Date.now()}`,
-        orderNumber: `ORD-${Date.now().toString().slice(-6)}`,
-        customerName: fullName,
-        customerPhone: phone || emailOrPhone,
-        address: fullAddress,
-        city: city,
-        items: cart,
-        subtotal: subtotal,
-        total: total,
-        paymentStatus: 'Paid',
-        paymentMethod: paymentMethod,
-        deliveryStatus: 'Processing',
-        trackingNumber: `SMSA-${Math.floor(10000000 + Math.random() * 90000000)}`,
-        carrier: 'SMSA Express Saudi',
-        createdAt: new Date().toISOString()
-      };
-
-      setPlacedOrder(fallbackOrder);
+      onOrderPlaced(result.order);
+    } catch (err) {
+      const apiErr = err as ApiError;
       setIsProcessing(false);
-      setStep('success');
-      onOrderPlaced(fallbackOrder);
-
-      try {
-        confetti({
-          particleCount: 80,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
-      } catch (e) {}
+      setServerError(
+        apiErr?.message ||
+        'We could not complete your order. Nothing has been charged — please try again.'
+      );
+      // A rejected cart (price, stock or discount change) needs a fresh quote.
+      if (apiErr?.status === 409) {
+        setQuote(null);
+      }
     }
   };
+
+  // Rendered after the hooks, never before them: an early return above a hook
+  // changes the hook order between renders, which React rejects.
+  if (!isOpen) return null;
 
   return (
     <div style={{
@@ -469,10 +600,26 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       <span>Save this information for next time</span>
                     </label>
 
+                    {/* Validation message for the details above */}
+                    {fieldError && (
+                      <div style={{
+                        marginTop: '12px',
+                        padding: '10px 12px',
+                        borderRadius: '8px',
+                        backgroundColor: '#FEF2F2',
+                        border: '1px solid #FECACA',
+                        color: '#B91C1C',
+                        fontSize: '12px',
+                        fontWeight: 600
+                      }}>
+                        {fieldError}
+                      </div>
+                    )}
+
                     {/* Submit Button (Matches Ronin Blue Pill Button) */}
                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
                       <button
-                        onClick={() => setStep('shipping')}
+                        onClick={handleContinueToShipping}
                         style={{
                           backgroundColor: '#1E3A8A',
                           color: '#ffffff',
@@ -598,6 +745,22 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   All transactions are secure and encrypted.
                 </p>
 
+                {/* A real failure is shown, never hidden behind a fake success */}
+                {(serverError || quoteError) && (
+                  <div style={{
+                    marginBottom: '16px',
+                    padding: '12px 14px',
+                    borderRadius: '8px',
+                    backgroundColor: '#FEF2F2',
+                    border: '1px solid #FECACA',
+                    color: '#B91C1C',
+                    fontSize: '12px',
+                    fontWeight: 600
+                  }}>
+                    {serverError || quoteError}
+                  </div>
+                )}
+
                 {/* Payment Selection Box */}
                 <div style={{ border: '1px solid #D1D5DB', borderRadius: '8px', overflow: 'hidden', marginBottom: '24px' }}>
                   {[
@@ -646,19 +809,23 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   </button>
                   <button
                     onClick={handlePay}
-                    disabled={isProcessing}
+                    disabled={isProcessing || !isPriced}
                     style={{
-                      backgroundColor: '#1E3A8A',
+                      backgroundColor: isProcessing || !isPriced ? '#9CA3AF' : '#1E3A8A',
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '8px',
                       padding: '13px 28px',
                       fontSize: '13px',
                       fontWeight: 800,
-                      cursor: isProcessing ? 'not-allowed' : 'pointer'
+                      cursor: isProcessing || !isPriced ? 'not-allowed' : 'pointer'
                     }}
                   >
-                    {isProcessing ? 'Processing order...' : `Pay now (${total.toFixed(2)} SAR)`}
+                    {isProcessing
+                      ? 'Redirecting to payment...'
+                      : !isPriced
+                        ? 'Checking prices...'
+                        : `Pay now (${total.toFixed(2)} SAR)`}
                   </button>
                 </div>
               </div>
@@ -684,14 +851,22 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   Thank you for your order!
                 </h2>
                 <p style={{ fontSize: '13px', color: '#6B7280', margin: '0 0 20px 0' }}>
-                  Order #{placedOrder.orderNumber || placedOrder.id} confirmed.
+                  Order #{placedOrder.orderNumber || placedOrder.id} has been created.
                 </p>
 
                 <div style={{ backgroundColor: '#F9FAFB', borderRadius: '10px', padding: '16px', textAlign: 'left', fontSize: '12px', color: '#4B5563', marginBottom: '24px' }}>
                   <div><strong>Customer:</strong> {placedOrder.customerName}</div>
                   <div><strong>Shipping to:</strong> {placedOrder.address}</div>
-                  <div><strong>Courier:</strong> {placedOrder.carrier}</div>
-                  <div><strong>Tracking:</strong> {placedOrder.trackingNumber}</div>
+                  <div><strong>Total:</strong> {Number(placedOrder.total || 0).toFixed(2)} SAR</div>
+                  <div>
+                    <strong>Payment:</strong>{' '}
+                    {placedOrder.paymentStatus === 'Paid'
+                      ? 'Paid and verified'
+                      : 'Awaiting payment confirmation'}
+                  </div>
+                  {placedOrder.trackingNumber && (
+                    <div><strong>Tracking:</strong> {placedOrder.trackingNumber}</div>
+                  )}
                 </div>
 
                 <button
@@ -841,6 +1016,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   />
                   <button
                     onClick={handleApplyDiscount}
+                    disabled={isApplyingDiscount}
                     style={{
                       backgroundColor: '#F3F4F6',
                       border: '1px solid #D1D5DB',
@@ -853,14 +1029,19 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       transition: 'background-color 0.15s'
                     }}
                   >
-                    Apply
+                    {isApplyingDiscount ? 'Checking…' : 'Apply'}
                   </button>
                 </div>
 
                 {appliedDiscount && (
                   <div style={{ marginTop: '8px', fontSize: '12px', color: '#059669', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <Tag size={13} />
-                    <span>Coupon <strong>{appliedDiscount.code}</strong> applied ({appliedDiscount.percent}% OFF)</span>
+                    <span>
+                      Coupon <strong>{appliedDiscount.code}</strong> applied
+                      {appliedDiscount.percent > 0
+                        ? ` (${appliedDiscount.percent}% OFF)`
+                        : ` (−${appliedDiscount.amount.toFixed(2)} SAR)`}
+                    </span>
                   </div>
                 )}
                 {discountError && (

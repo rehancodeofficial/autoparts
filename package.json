@@ -11,7 +11,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "lint": "oxlint"
+    "lint": "oxlint",
+    "db:bootstrap": "tsx packages/db/src/bootstrapCli.ts",
+    "typecheck": "tsc -p tsconfig.server.json",
+    "test:integration": "vitest run src/commerce.test.ts"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",

@@ -155,48 +155,62 @@ describe('AutoPart Full-Stack Authentication & API Tests', () => {
     expect(res.body.cartItems.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('9. Guest checkout attempt is blocked without authentication', async () => {
+  /**
+   * Tests 9 and 10 used to assert the two behaviours this work removed:
+   *
+   *   9.  guest checkout is rejected with 401 — guest checkout is now a
+   *       requirement, so /api/orders/checkout no longer demands a session;
+   *   10. a `price` sent by the client becomes the order subtotal, and the
+   *       order is stored as paymentStatus "Paid" with no payment at all.
+   *
+   * Both are now covered by src/commerce.test.ts, which runs against real
+   * PostgreSQL because the checkout path relies on SELECT … FOR UPDATE,
+   * ON CONFLICT and COUNT(*) FILTER — none of which pg-mem implements.
+   */
+  it('9. Checkout no longer requires authentication (guest checkout)', async () => {
     const res = await request(app)
       .post('/api/orders/checkout')
       .send({
-        items: [{ productId: 'part-1', price: 100, quantity: 1 }],
+        items: [{ productId: 'part-1', quantity: 1 }],
         customerName: 'Guest Person',
+        customerEmail: 'guest.person@example.sa',
         customerPhone: '+966501112233',
         city: 'Jeddah',
-        address: 'Al Andalus'
+        address: 'Al Andalus District, Street 7'
       });
 
-    expect(res.status).toBe(401);
+    // The guard is gone; whatever happens next, it is not an auth rejection.
+    expect(res.status).not.toBe(401);
   });
 
-  it('10. Authenticated checkout creates a server-validated order in PostgreSQL', async () => {
+  it('10. Checkout refuses a client-supplied price for an unknown product', async () => {
     const res = await request(app)
       .post('/api/orders/checkout')
       .set('Cookie', sessionCookie)
       .send({
         items: [
-          { productId: 'part-01', nameEn: 'Ceramic Brake Pads', nameAr: 'فحمات فرامل سيراميك', price: 285.50, quantity: 2 }
+          { productId: 'part-01', nameEn: 'Ceramic Brake Pads', price: 285.50, quantity: 2 }
         ],
         customerName: testUser.name,
+        customerEmail: testUser.email,
         customerPhone: testUser.phone,
         city: 'Riyadh',
         address: 'Al Malqa, Anas Ibn Malik Rd',
         paymentMethod: 'mada'
       });
 
-    expect(res.status).toBe(201);
-    expect(res.body.order).toBeDefined();
-    expect(res.body.order.orderNumber).toMatch(/^KSA-\d+/);
-    expect(res.body.order.subtotal).toBe(571); // 285.50 * 2
-    expect(res.body.order.paymentStatus).toBe('Paid');
+    // 'part-01' is not in the catalogue, so there is no price to trust. What
+    // matters is that no order is created at the client's 285.50 — previously
+    // this returned 201 with subtotal 571 and paymentStatus "Paid".
+    //
+    // The exact rejection code is asserted in commerce.test.ts; pg-mem cannot
+    // execute the catalogue price lookup (= ANY($1::text[])), so here we only
+    // assert that nothing was persisted.
+    expect(res.status).not.toBe(201);
 
-    // Verify order retrieved in user order history
-    const historyRes = await request(app)
-      .get('/api/account/orders')
-      .set('Cookie', sessionCookie);
-
-    expect(historyRes.status).toBe(200);
-    expect(historyRes.body.orders.length).toBeGreaterThanOrEqual(1);
+    const { query } = await import('../packages/db/src/db');
+    const orders = await query('SELECT * FROM "Order"');
+    expect(orders.rowCount).toBe(0);
   });
 
   it('11. Customer role cannot access admin-only endpoints', async () => {

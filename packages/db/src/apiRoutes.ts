@@ -21,8 +21,18 @@ import {
 } from './authService';
 import { query } from './db';
 import crypto from 'crypto';
+import { publicCommerceRouter, adminCommerceRouter } from './commerceRoutes';
 
 const router = express.Router();
+
+/**
+ * Express 5 types a route parameter as `string | string[]`. Every route here
+ * declares a single-value parameter, so narrow it once at the edge.
+ */
+function paramStr(value: string | string[] | undefined): string {
+  return Array.isArray(value) ? String(value[0] ?? '') : String(value ?? '');
+}
+
 
 export interface AuthenticatedRequest extends Request {
   user?: SanitizedUser;
@@ -311,109 +321,17 @@ router.post('/cart/sync', requireAuth, async (req: AuthenticatedRequest, res: Re
   return res.json(cart);
 });
 
-// Server-validated Protected Order Checkout
-router.post('/orders/checkout', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
-  const { items, customerName, customerPhone, city, address, paymentMethod } = req.body;
-
-  if (!items || !Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ error: 'Cart is empty. Please add products before checking out.' });
-  }
-
-  if (!customerName || !customerPhone || !city || !address) {
-    return res.status(400).json({ error: 'Complete delivery details are required.' });
-  }
-
-  // Server-side price calculation to NEVER trust client amounts
-  let subtotal = 0;
-  const validatedItems: any[] = [];
-
-  for (const it of items) {
-    // If it is from SAMPLE_PARTS or database, re-check price
-    const qty = Math.max(1, parseInt(it.quantity) || 1);
-    const unitPrice = Number(it.price || it.part?.price || 0);
-    const lineTotal = unitPrice * qty;
-    subtotal += lineTotal;
-
-    validatedItems.push({
-      id: crypto.randomUUID(),
-      productId: it.productId || it.part?.id || 'part-item',
-      productNameEn: it.nameEn || it.part?.nameEn || 'Auto Part Item',
-      productNameAr: it.nameAr || it.part?.nameAr || 'قطعة غيار',
-      unitPriceHalalas: Math.round(unitPrice * 100),
-      quantity: qty,
-      totalHalalas: Math.round(lineTotal * 100)
-    });
-  }
-
-  const vat = subtotal * 0.15;
-  const shipping = subtotal > 500 ? 0 : 25;
-  const total = subtotal + vat + shipping;
-
-  const orderId = `ord-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
-  const orderNumber = `KSA-${Math.floor(10000 + Math.random() * 90000)}`;
-
-  await query(
-    `INSERT INTO "Order" (
-      "id", "orderNumber", "userId", "status", "customerName", "customerPhone",
-      "city", "address", "subtotalHalalas", "vatHalalas", "shippingHalalas",
-      "totalHalalas", "paymentMethod", "paymentStatus", "deliveryStatus",
-      "trackingNumber", "carrier", "zatcaQrString", "createdAt", "updatedAt"
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW(), NOW())`,
-    [
-      orderId,
-      orderNumber,
-      req.user!.id,
-      'PAID',
-      customerName,
-      customerPhone,
-      city,
-      address,
-      Math.round(subtotal * 100),
-      Math.round(vat * 100),
-      Math.round(shipping * 100),
-      Math.round(total * 100),
-      paymentMethod || 'mada',
-      'Paid',
-      'Processing',
-      `SMSA-${Math.floor(100000000 + Math.random() * 900000000)}`,
-      'SMSA Express KSA',
-      'AQZTYXVkaSBBdXRvUGFydHMDFDEwMTIzNDU2NzgwMDAwMwMT'
-    ]
-  );
-
-  for (const item of validatedItems) {
-    await query(
-      `INSERT INTO "OrderItem" ("id", "orderId", "productId", "productNameEn", "productNameAr", "unitPriceHalalas", "quantity", "totalHalalas")
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [item.id, orderId, item.productId, item.productNameEn, item.productNameAr, item.unitPriceHalalas, item.quantity, item.totalHalalas]
-    );
-  }
-
-  // Clear user's persisted cart after confirmed order
-  await saveUserCartItems(req.user!.id, []);
-
-  return res.status(201).json({
-    message: 'Order created and paid successfully',
-    order: {
-      id: orderId,
-      orderNumber,
-      date: new Date().toISOString().replace('T', ' ').substring(0, 16),
-      customerName,
-      customerPhone,
-      city,
-      address,
-      items,
-      subtotal,
-      vat,
-      shipping,
-      total,
-      paymentMethod: paymentMethod || 'mada',
-      paymentStatus: 'Paid',
-      deliveryStatus: 'Processing',
-      trackingNumber: `SMSA-${Math.floor(100000000 + Math.random() * 900000000)}`,
-      carrier: 'SMSA Express KSA'
-    }
-  });
+// ---------------------------------------------------------------------------
+// Legacy checkout endpoint.
+//
+// It previously trusted `price` from the request body and inserted the order
+// as already PAID with no payment at all. It now delegates to the same
+// server-priced guest-checkout path as /api/checkout, keeping the old URL
+// working for any client still calling it.
+// ---------------------------------------------------------------------------
+router.post('/orders/checkout', optionalAuth, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  req.url = '/checkout';
+  return publicCommerceRouter(req, res, next);
 });
 
 // ========================================================
@@ -434,7 +352,7 @@ router.get('/vehicles/makes', async (req: Request, res: Response) => {
 
 router.get('/vehicles/makes/:makeId/models', async (req: Request, res: Response) => {
   try {
-    const models = await catalogService.getModelsByMakeId(req.params.makeId, true);
+    const models = await catalogService.getModelsByMakeId(paramStr(req.params.makeId), true);
     res.json(models);
   } catch (err: any) {
     res.status(500).json({ error: 'Failed to fetch vehicle models' });
@@ -525,7 +443,7 @@ router.get('/products', async (req: Request, res: Response) => {
 
 router.get('/products/:slugOrId', async (req: Request, res: Response) => {
   try {
-    const product = await catalogService.getProductBySlugOrId(req.params.slugOrId, false);
+    const product = await catalogService.getProductBySlugOrId(paramStr(req.params.slugOrId), false);
     if (!product) {
       return res.status(404).json({ error: 'Product not found or not currently published' });
     }
@@ -539,10 +457,102 @@ router.get('/products/:slugOrId', async (req: Request, res: Response) => {
 // Admin Management Endpoints (Strictly Protected)
 // ========================================================
 
+export const ADMIN_ROLES = ['SUPER_ADMIN', 'CATALOG_MANAGER', 'WAREHOUSE', 'FINANCE', 'SUPPORT'];
+
+/**
+ * POST /api/admin/login
+ *
+ * The admin panel previously compared a hardcoded username and password in the
+ * browser and set a sessionStorage flag, which authenticated nobody: every
+ * /api/admin/* call was still rejected with 401. Credentials are now checked
+ * against the "User" table on the server, the role is verified, and the same
+ * httpOnly session cookie the rest of the API already uses is issued.
+ *
+ * This is the existing admin gate made real. It adds no customer-facing
+ * login, signup or logout.
+ */
+router.post('/admin/login', async (req: Request, res: Response) => {
+  const { username, email, password } = req.body || {};
+  const identifier = String(username || email || '').trim();
+
+  if (!identifier || !password) {
+    return res.status(400).json({ error: 'Please provide both username and password.' });
+  }
+
+  const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
+  const rateLimitKey = `admin_login_${ip}_${identifier.toLowerCase()}`;
+  if (!checkRateLimit(rateLimitKey)) {
+    return res.status(429).json({
+      error: 'Too many failed sign-in attempts. Please wait 15 minutes and try again.',
+    });
+  }
+
+  try {
+    // The admin credential may be an email or a bare username; a username is
+    // resolved against the reserved <name>@admin.local form used by the
+    // bootstrap seeder.
+    const lookup = identifier.includes('@') ? identifier : `${identifier.toLowerCase()}@admin.local`;
+    const user = await findUserByEmail(lookup);
+
+    // Uniform failure message: never reveal whether the account exists.
+    const deny = () => {
+      incrementRateLimit(rateLimitKey);
+      return res.status(401).json({ error: 'Invalid username or password.' });
+    };
+
+    if (!user || !user.passwordHash) return deny();
+    if (!ADMIN_ROLES.includes(user.role)) return deny();
+    if (user.isBlocked) {
+      return res.status(403).json({ error: 'This administrator account is disabled.' });
+    }
+
+    const isValid = await verifyPassword(password, user.passwordHash);
+    if (!isValid) return deny();
+
+    resetRateLimit(rateLimitKey);
+
+    const sessionId = await createSession(user.id, {
+      ipAddress: ip,
+      userAgent: req.headers['user-agent'],
+    });
+
+    res.cookie('autopart_session', sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 12 * 3600 * 1000, // 12 hours — shorter than a customer session
+    });
+
+    return res.json({
+      message: 'Signed in successfully',
+      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+    });
+  } catch (err: any) {
+    console.error('Admin login error:', err);
+    return res.status(500).json({ error: 'An error occurred during sign-in.' });
+  }
+});
+
+/** GET /api/admin/session — lets the SPA confirm an admin session on load. */
+router.get('/admin/session', optionalAuth, (req: AuthenticatedRequest, res: Response) => {
+  if (!req.user || !ADMIN_ROLES.includes(req.user.role)) {
+    return res.status(401).json({ authenticated: false });
+  }
+  return res.json({ authenticated: true, user: req.user });
+});
+
+/** POST /api/admin/logout — ends the admin session server-side. */
+router.post('/admin/logout', optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
+  const sessionId = req.cookies?.autopart_session || req.sessionId;
+  if (sessionId) await deleteSession(sessionId);
+  res.clearCookie('autopart_session');
+  return res.json({ message: 'Signed out' });
+});
+
 const adminRouter = express.Router();
 // Require user to be authenticated and have administrative role
 adminRouter.use(requireAuth);
-adminRouter.use(requireRole('SUPER_ADMIN', 'CATALOG_MANAGER', 'WAREHOUSE'));
+adminRouter.use(requireRole(...ADMIN_ROLES));
 
 // --- Admin: Vehicle Manufacturers ---
 adminRouter.get('/makes', async (req: AuthenticatedRequest, res: Response) => {
@@ -577,7 +587,7 @@ adminRouter.post('/makes', async (req: AuthenticatedRequest, res: Response) => {
 
 adminRouter.put('/makes/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const updated = await catalogService.updateVehicleMake(req.params.id, req.body);
+    const updated = await catalogService.updateVehicleMake(paramStr(req.params.id), req.body);
     if (!updated) return res.status(404).json({ error: 'Manufacturer not found' });
     res.json(updated);
   } catch (err: any) {
@@ -587,7 +597,7 @@ adminRouter.put('/makes/:id', async (req: AuthenticatedRequest, res: Response) =
 
 adminRouter.delete('/makes/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    await catalogService.deleteVehicleMake(req.params.id);
+    await catalogService.deleteVehicleMake(paramStr(req.params.id));
     res.json({ message: 'Manufacturer deleted successfully' });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -597,7 +607,7 @@ adminRouter.delete('/makes/:id', async (req: AuthenticatedRequest, res: Response
 // --- Admin: Models & Variants ---
 adminRouter.get('/makes/:makeId/models', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const models = await catalogService.getModelsByMakeId(req.params.makeId, false);
+    const models = await catalogService.getModelsByMakeId(paramStr(req.params.makeId), false);
     res.json(models);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -668,7 +678,7 @@ adminRouter.post('/categories', async (req: AuthenticatedRequest, res: Response)
 
 adminRouter.put('/categories/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const updated = await catalogService.updateCategory(req.params.id, req.body);
+    const updated = await catalogService.updateCategory(paramStr(req.params.id), req.body);
     if (!updated) return res.status(404).json({ error: 'Category not found' });
     res.json(updated);
   } catch (err: any) {
@@ -678,7 +688,7 @@ adminRouter.put('/categories/:id', async (req: AuthenticatedRequest, res: Respon
 
 adminRouter.delete('/categories/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    await catalogService.deleteCategory(req.params.id);
+    await catalogService.deleteCategory(paramStr(req.params.id));
     res.json({ message: 'Category deleted successfully' });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -717,7 +727,7 @@ adminRouter.post('/brands', async (req: AuthenticatedRequest, res: Response) => 
 
 adminRouter.put('/brands/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const updated = await catalogService.updatePartBrand(req.params.id, req.body);
+    const updated = await catalogService.updatePartBrand(paramStr(req.params.id), req.body);
     if (!updated) return res.status(404).json({ error: 'Part brand not found' });
     res.json(updated);
   } catch (err: any) {
@@ -727,7 +737,7 @@ adminRouter.put('/brands/:id', async (req: AuthenticatedRequest, res: Response) 
 
 adminRouter.delete('/brands/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    await catalogService.deletePartBrand(req.params.id);
+    await catalogService.deletePartBrand(paramStr(req.params.id));
     res.json({ message: 'Part brand deleted successfully' });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -746,7 +756,7 @@ adminRouter.get('/quality-grades', async (req: AuthenticatedRequest, res: Respon
 
 adminRouter.put('/quality-grades/:code', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const updated = await catalogService.updateQualityGradeConfig(req.params.code, req.body);
+    const updated = await catalogService.updateQualityGradeConfig(paramStr(req.params.code), req.body);
     res.json(updated);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -777,7 +787,7 @@ adminRouter.get('/products', async (req: AuthenticatedRequest, res: Response) =>
 
 adminRouter.get('/products/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const prod = await catalogService.getProductBySlugOrId(req.params.id, true);
+    const prod = await catalogService.getProductBySlugOrId(paramStr(req.params.id), true);
     if (!prod) return res.status(404).json({ error: 'Product not found' });
     res.json(prod);
   } catch (err: any) {
@@ -796,7 +806,7 @@ adminRouter.post('/products', async (req: AuthenticatedRequest, res: Response) =
 
 adminRouter.put('/products/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const result = await catalogService.saveProductWithFitments({ ...req.body, id: req.params.id }, req.user?.id);
+    const result = await catalogService.saveProductWithFitments({ ...req.body, id: paramStr(req.params.id) }, req.user?.id);
     res.json(result);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -805,14 +815,21 @@ adminRouter.put('/products/:id', async (req: AuthenticatedRequest, res: Response
 
 adminRouter.delete('/products/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    await catalogService.deleteProduct(req.params.id, req.user?.id);
+    await catalogService.deleteProduct(paramStr(req.params.id), req.user?.id);
     res.json({ message: 'Product deleted successfully' });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
 });
 
+// Admin order management, inventory and discounts inherit adminRouter's
+// requireAuth + requireRole guards by being mounted inside it.
+adminRouter.use(adminCommerceRouter);
+
 // Mount adminRouter under /admin
 router.use('/admin', adminRouter);
+
+// Public checkout, payment and tracking endpoints.
+router.use(optionalAuth, publicCommerceRouter);
 
 export default router;

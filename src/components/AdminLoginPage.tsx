@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiPost, ApiError } from '../utils/api';
 import { Lock, User, ShieldCheck, ArrowRight, AlertCircle, ArrowLeft } from 'lucide-react';
 
 interface AdminLoginPageProps {
@@ -17,7 +18,16 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  /**
+   * Authenticates against the server.
+   *
+   * This form used to compare "demoadmin"/"demoadmin" here in the browser and
+   * set a sessionStorage flag, which authenticated nothing: the API had no
+   * idea anyone had signed in, so every admin save came back 401. The server
+   * now checks the credentials against the User table and issues an httpOnly
+   * session cookie.
+   */
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -28,21 +38,27 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
 
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      // Validate credentials: username: demoadmin, password: demoadmin
-      if (username.trim().toLowerCase() === 'demoadmin' && password === 'demoadmin') {
-        sessionStorage.setItem('autoparts_admin_authenticated', 'true');
-        setIsSubmitting(false);
-        onSuccess();
-      } else {
-        setIsSubmitting(false);
-        setError(
-          lang === 'ar'
-            ? 'اسم المستخدم أو كلمة المرور غير صحيحة'
-            : 'Invalid credentials. Please use demoadmin / demoadmin.'
-        );
-      }
-    }, 400);
+    try {
+      await apiPost('/api/admin/login', {
+        username: username.trim(),
+        password,
+      });
+      // Cached only so a page reload can show the panel immediately; the
+      // server session cookie is what actually grants access.
+      sessionStorage.setItem('autoparts_admin_authenticated', 'true');
+      setIsSubmitting(false);
+      onSuccess();
+    } catch (err) {
+      sessionStorage.removeItem('autoparts_admin_authenticated');
+      setIsSubmitting(false);
+      const apiErr = err as ApiError;
+      setError(
+        apiErr?.message ||
+        (lang === 'ar'
+          ? 'اسم المستخدم أو كلمة المرور غير صحيحة'
+          : 'Invalid username or password.')
+      );
+    }
   };
 
   return (

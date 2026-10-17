@@ -82,6 +82,7 @@ export const VehicleManufacturerManager: React.FC<VehicleManufacturerManagerProp
       const method = editingMake ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
+        credentials: 'include',
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -112,6 +113,7 @@ export const VehicleManufacturerManager: React.FC<VehicleManufacturerManagerProp
   const handleTogglePublish = async (m: VehicleMake) => {
     try {
       await fetch(`/api/admin/makes/${m.id}`, {
+        credentials: 'include',
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isPublished: !m.isPublished })
@@ -125,7 +127,7 @@ export const VehicleManufacturerManager: React.FC<VehicleManufacturerManagerProp
   const handleDeleteMake = async (m: VehicleMake) => {
     if (!window.confirm(`Are you sure you want to delete manufacturer "${m.name}"?`)) return;
     try {
-      const res = await fetch(`/api/admin/makes/${m.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/makes/${m.id}`, { method: 'DELETE', credentials: 'include' });
       if (!res.ok) {
         const data = await res.json();
         alert(data.error || 'Failed to delete manufacturer');
@@ -141,7 +143,7 @@ export const VehicleManufacturerManager: React.FC<VehicleManufacturerManagerProp
   const openModelManager = async (m: VehicleMake) => {
     setSelectedMakeForModels(m);
     try {
-      const res = await fetch(`/api/admin/makes/${m.id}/models`);
+      const res = await fetch(`/api/admin/makes/${m.id}/models`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setModelsList(data);
@@ -162,6 +164,7 @@ export const VehicleManufacturerManager: React.FC<VehicleManufacturerManagerProp
         .filter(y => !isNaN(y));
 
       const res = await fetch('/api/admin/models', {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -179,7 +182,7 @@ export const VehicleManufacturerManager: React.FC<VehicleManufacturerManagerProp
         setModelSlug('');
         setModelGen('');
         // Refresh models
-        const updated = await fetch(`/api/admin/makes/${selectedMakeForModels.id}/models`).then(r => r.json());
+        const updated = await fetch(`/api/admin/makes/${selectedMakeForModels.id}/models`, { credentials: 'include' }).then(r => r.json());
         setModelsList(updated);
         onRefresh();
       }

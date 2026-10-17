@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets — never commit these.
+# .env was previously tracked and its contents (including the Supabase
+# service-role key) are in the git history. Removing it here stops future
+# commits; the already-published values must be rotated.
+.env
+.env.*
+!.env.example
