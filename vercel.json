@@ -7,6 +7,9 @@
       "includeFiles": "packages/db/prisma/migrations/**"
     }
   },
+  "env": {
+    "VERCEL_FORCE_NO_BUILD_CACHE": "1"
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
